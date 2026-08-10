@@ -59,6 +59,7 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
+[hidden] { display: none !important; }
 html, body { height: 100%; }
 body {
   background: var(--bg);
@@ -334,6 +335,52 @@ button { background: none; border: 0; cursor: pointer; }
 .cal-cell.sel { background: var(--accent-soft); border-color: var(--accent); }
 .cal-cell.blank { visibility: hidden; }
 .cal-hint { color: var(--ink2); font-size: 12px; padding: 6px 18px 16px; }
+
+/* ---------- 연간 기분 히트맵 ---------- */
+.year-grid { display: flex; flex-direction: column; gap: 3px; padding: 8px 14px 4px; }
+.year-row { display: grid; grid-template-columns: 32px repeat(31, 1fr); gap: 2px; align-items: center; }
+.year-row .ym { font-size: 10.5px; color: var(--ink2); }
+.year-cell {
+  aspect-ratio: 1;
+  border-radius: 3px;
+  background: var(--accent-soft);
+  opacity: .35;
+  padding: 0;
+  min-width: 0;
+}
+.year-cell.has { opacity: 1; }
+.year-cell.today { outline: 1.5px solid var(--accent); outline-offset: 1px; opacity: 1; }
+.year-cell.blank { visibility: hidden; }
+.year-legend { display: flex; flex-wrap: wrap; gap: 4px 10px; padding: 8px 18px 0; font-size: 11.5px; color: var(--ink2); }
+.year-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 3px; vertical-align: -1px; }
+
+/* ---------- 일기 템플릿 ---------- */
+.tmpl-row { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 20px 0; }
+.tmpl-row .chip { font-size: 12px; }
+.tmpl-row[hidden] { display: none; }
+
+/* ---------- 노트 폴더 ---------- */
+.folder-row { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 14px 10px; }
+.f-chip {
+  border: 1px solid var(--line);
+  background: var(--paper);
+  border-radius: 99px;
+  padding: 4px 12px;
+  font-size: 12.5px;
+  color: var(--ink2);
+}
+.f-chip.active { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.f-chip:not(.active):hover { border-color: var(--accent); color: var(--accent); }
+.folder-line { padding: 6px 20px 0; }
+.folder-line select {
+  border: 1px solid var(--line);
+  background: var(--paper2);
+  color: var(--ink2);
+  border-radius: 8px;
+  padding: 5px 8px;
+  font-size: 12.5px;
+  max-width: 220px;
+}
 .picker-row {
   display: flex;
   align-items: center;
@@ -604,6 +651,7 @@ button { background: none; border: 0; cursor: pointer; }
           <span class="count" id="note-count"></span>
         </header>
         <div class="search"><input id="search" type="search" placeholder="노트 검색" autocomplete="off"></div>
+        <div class="folder-row" id="folder-row"></div>
         <div class="scroll" id="note-list"></div>
         <button class="fab" id="new-note">＋ 새 노트</button>
       </div>
@@ -620,6 +668,7 @@ button { background: none; border: 0; cursor: pointer; }
           </div>
           <div class="editor-top">
             <input class="title-input" id="note-title" placeholder="제목" autocomplete="off">
+            <div class="folder-line"><select id="folder-select" aria-label="폴더 선택"></select></div>
             <div class="photo-strip" id="note-photos"></div>
           </div>
           <textarea class="body-input" id="note-body" placeholder="내용을 입력하세요…"></textarea>
@@ -637,16 +686,19 @@ button { background: none; border: 0; cursor: pointer; }
         <header class="pane-head cal-head">
           <h1 id="cal-title"></h1>
           <div class="cal-nav">
-            <button class="icon-btn" id="prev-month" aria-label="이전 달">‹</button>
+            <button class="chip" id="year-toggle">연간</button>
+            <button class="icon-btn" id="prev-month" aria-label="이전">‹</button>
             <button class="chip" id="go-today">오늘</button>
-            <button class="icon-btn" id="next-month" aria-label="다음 달">›</button>
+            <button class="icon-btn" id="next-month" aria-label="다음">›</button>
           </div>
         </header>
         <div class="scroll">
-          <div class="cal-dow" aria-hidden="true"><span class="sun">일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span class="sat">토</span></div>
+          <div class="cal-dow" id="cal-dow" aria-hidden="true"><span class="sun">일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span class="sat">토</span></div>
           <div class="cal-grid" id="cal-grid"></div>
+          <div class="year-grid" id="year-grid" hidden></div>
+          <div class="year-legend" id="year-legend" hidden></div>
           <div class="stats" id="diary-stats"></div>
-          <p class="cal-hint">기록한 날에는 기분 이모지가 표시돼요.</p>
+          <p class="cal-hint" id="cal-hint">기록한 날에는 기분 이모지가 표시돼요.</p>
         </div>
       </div>
       <div class="pane detail-pane">
@@ -663,6 +715,7 @@ button { background: none; border: 0; cursor: pointer; }
             <div class="picker-row"><span class="picker-label">날씨</span><div class="picker" id="weather-picker"></div></div>
             <div class="picker-row"><span class="picker-label">활동</span><div class="picker" id="act-picker"></div></div>
             <div id="memory-slot"></div>
+            <div class="tmpl-row" id="tmpl-row" hidden></div>
             <div class="photo-strip" id="diary-photos"></div>
           </div>
           <textarea class="body-input" id="diary-body" placeholder="오늘 하루는 어땠나요?"></textarea>
@@ -758,6 +811,11 @@ const ACTS = [["🏃", "운동"], ["💼", "일"], ["📚", "공부"], ["👥", 
 const MOOD_COLORS = { "😄": "#F5A623", "🙂": "#7CC576", "😐": "#9AA0AB", "😔": "#7E9BD0", "😢": "#5C79B8", "😤": "#D96C60" };
 const CHK_EMPTY = "☐", CHK_DONE = "☑";
 const TRASH_KEEP_MS = 30 * 24 * 3600 * 1000;
+const TEMPLATES = [
+  ["✍ 오늘의 3줄", "1. 오늘 한 일: \n2. 좋았던 것: \n3. 내일 할 일: "],
+  ["🙏 감사일기", "오늘 감사한 것 세 가지\n1. \n2. \n3. "],
+  ["🔄 회고", "잘한 점: \n아쉬운 점: \n다음에 시도할 것: "]
+];
 
 /* ---------- 저장소: IndexedDB (localStorage에서 자동 이전) ---------- */
 let idb = null;
@@ -804,9 +862,9 @@ function idbClear(store) {
 function loadLocal() {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) return Object.assign({ notes: [], diary: {}, trash: [], settings: { theme: "system" } }, JSON.parse(raw));
+    if (raw) return Object.assign({ notes: [], diary: {}, trash: [], folders: [], settings: { theme: "system" } }, JSON.parse(raw));
   } catch (e) { /* 손상된 데이터는 초기화 */ }
-  return { notes: [], diary: {}, trash: [], settings: { theme: "system" } };
+  return { notes: [], diary: {}, trash: [], folders: [], settings: { theme: "system" } };
 }
 function persist() {
   if (idb) idbPut("kv", "db", db).catch(() => {});
@@ -816,7 +874,7 @@ async function initStorage() {
   try { idb = await openDb(); } catch (e) { idb = null; }
   if (idb) {
     const stored = await idbGet("kv", "db").catch(() => null);
-    if (stored) db = Object.assign({ notes: [], diary: {}, trash: [], settings: { theme: "system" } }, stored);
+    if (stored) db = Object.assign({ notes: [], diary: {}, trash: [], folders: [], settings: { theme: "system" } }, stored);
     else { db = loadLocal(); idbPut("kv", "db", db).catch(() => {}); }
   } else {
     db = loadLocal();
@@ -826,13 +884,15 @@ async function initStorage() {
   db.trash = (db.trash || []).filter((t) => Date.now() - t.deletedAt < TRASH_KEEP_MS);
 }
 
-let db = { notes: [], diary: {}, trash: [], settings: { theme: "system" } };
+let db = { notes: [], diary: {}, trash: [], folders: [], settings: { theme: "system" } };
 const ui = {
   tab: "notes",
   noteId: null,
   month: startOfMonth(new Date()),
   diaryDate: ymd(new Date()),
-  search: ""
+  search: "",
+  folder: "",
+  calMode: "month"
 };
 
 /* ---------- 유틸 ---------- */
@@ -869,10 +929,37 @@ function noteById(id) { return db.notes.find((n) => n.id === id); }
 function visibleNotes() {
   const q = ui.search.trim().toLowerCase();
   return db.notes
+    .filter((n) => !ui.folder || n.folder === ui.folder)
     .filter((n) => !q || (n.title + "\n" + n.body).toLowerCase().includes(q))
     .sort((a, b) => (b.pinned - a.pinned) || (b.updatedAt - a.updatedAt));
 }
+
+/* ---------- 노트 폴더 ---------- */
+function renderFolderRow() {
+  const chips = ['<button class="f-chip' + (ui.folder === "" ? " active" : "") + '" data-folder="">전체</button>']
+    .concat(db.folders.map((f) =>
+      '<button class="f-chip' + (ui.folder === f ? " active" : "") + '" data-folder="' + esc(f) + '">' + esc(f) + "</button>"))
+    .concat(['<button class="f-chip" data-new-folder>＋</button>']);
+  $("#folder-row").innerHTML = chips.join("");
+}
+function addFolder() {
+  const name = prompt("새 폴더 이름을 입력하세요");
+  if (name === null) return null;
+  const t = name.trim();
+  if (!t) return null;
+  if (!db.folders.includes(t)) { db.folders.push(t); persist(); }
+  renderFolderRow();
+  return t;
+}
+function renderFolderSelect(n) {
+  const sel = $("#folder-select");
+  sel.innerHTML = '<option value="">폴더 없음</option>' +
+    db.folders.map((f) => '<option value="' + esc(f) + '">📁 ' + esc(f) + "</option>").join("") +
+    '<option value="__new__">＋ 새 폴더…</option>';
+  sel.value = n.folder && db.folders.includes(n.folder) ? n.folder : "";
+}
 function renderNoteList() {
+  renderFolderRow();
   const list = visibleNotes();
   $("#note-count").textContent = db.notes.length ? db.notes.length + "개" : "";
   if (!list.length) {
@@ -899,6 +986,7 @@ function renderEditor() {
   $("#note-body").value = n.body;
   $("#pin-btn").classList.toggle("active", !!n.pinned);
   renderNoteMeta(n);
+  renderFolderSelect(n);
   renderStrip("#note-photos", n.photoIds, "note");
 }
 function renderNoteMeta(n) {
@@ -1124,6 +1212,17 @@ function pruneEntry(date) {
   if (e && !e.mood && !e.weather && !(e.acts && e.acts.length) && !(e.photoIds && e.photoIds.length) && !e.body.trim()) delete db.diary[date];
 }
 function renderCalendar() {
+  const yearMode = ui.calMode === "year";
+  $("#cal-dow").hidden = yearMode;
+  $("#cal-grid").hidden = yearMode;
+  $("#diary-stats").hidden = yearMode;
+  $("#year-grid").hidden = !yearMode;
+  $("#year-legend").hidden = !yearMode;
+  $("#year-toggle").textContent = yearMode ? "월간" : "연간";
+  $("#cal-hint").textContent = yearMode
+    ? "칸의 색은 그날의 기분이에요. 칸을 누르면 그날로 이동해요."
+    : "기록한 날에는 기분 이모지가 표시돼요.";
+  if (yearMode) { renderYear(); return; }
   const y = ui.month.getFullYear(), m = ui.month.getMonth();
   $("#cal-title").textContent = y + "년 " + (m + 1) + "월";
   const first = new Date(y, m, 1);
@@ -1141,6 +1240,33 @@ function renderCalendar() {
   }
   $("#cal-grid").innerHTML = html;
   renderStats();
+}
+
+/* ---------- 연간 기분 히트맵 ---------- */
+function renderYear() {
+  const y = ui.month.getFullYear();
+  $("#cal-title").textContent = y + "년";
+  const today = ymd(new Date());
+  let rows = "";
+  for (let m = 0; m < 12; m++) {
+    const days = new Date(y, m + 1, 0).getDate();
+    let cells = "";
+    for (let d = 1; d <= 31; d++) {
+      if (d > days) { cells += '<span class="year-cell blank"></span>'; continue; }
+      const date = y + "-" + pad(m + 1) + "-" + pad(d);
+      const e = db.diary[date];
+      const color = e && e.mood ? MOOD_COLORS[e.mood] : "";
+      const cls = "year-cell" + (e ? " has" : "") + (date === today ? " today" : "");
+      cells += '<button class="' + cls + '" data-date="' + date + '"' +
+        (color ? ' style="background:' + color + '"' : "") +
+        ' aria-label="' + (m + 1) + "월 " + d + '일"></button>';
+    }
+    rows += '<div class="year-row"><span class="ym">' + (m + 1) + "월</span>" + cells + "</div>";
+  }
+  $("#year-grid").innerHTML = rows;
+  $("#year-legend").innerHTML = MOODS.map(([e, l]) =>
+    "<span><i style=\"background:" + MOOD_COLORS[e] + "\"></i>" + e + " " + l + "</span>").join("") +
+    '<span><i style="background:var(--accent-soft)"></i>기분 없이 기록</span>';
 }
 
 /* ---------- 통계 · 스트릭 ---------- */
@@ -1219,12 +1345,14 @@ function renderDiaryEditor() {
   $$("#mood-picker .pick-btn").forEach((b) => b.classList.toggle("active", b.dataset.v === e.mood));
   $$("#weather-picker .pick-btn").forEach((b) => b.classList.toggle("active", b.dataset.v === e.weather));
   $$("#act-picker .pick-btn").forEach((b) => b.classList.toggle("active", acts.includes(b.dataset.v)));
+  $("#tmpl-row").hidden = !!(e.body && e.body.trim());
   renderMemories();
   renderStrip("#diary-photos", e.photoIds, "diary");
 }
 function selectDate(date) {
   ui.diaryDate = date;
   ui.month = startOfMonth(parseYmd(date));
+  ui.calMode = "month";
   renderDiaryEditor();
   renderCalendar();
   setPane("detail");
@@ -1269,9 +1397,12 @@ function deleteDiary() {
   renderCalendar();
 }
 function shiftMonth(n) {
-  ui.month = new Date(ui.month.getFullYear(), ui.month.getMonth() + n, 1);
+  const yearMode = ui.calMode === "year";
+  ui.month = yearMode
+    ? new Date(ui.month.getFullYear() + n, ui.month.getMonth(), 1)
+    : new Date(ui.month.getFullYear(), ui.month.getMonth() + n, 1);
   renderCalendar();
-  const g = $("#cal-grid");
+  const g = $(yearMode ? "#year-grid" : "#cal-grid");
   g.classList.remove("slide-left", "slide-right");
   void g.offsetWidth; // 애니메이션 재시작
   g.classList.add(n > 0 ? "slide-left" : "slide-right");
@@ -1368,7 +1499,7 @@ function importData(file) {
       const data = JSON.parse(reader.result);
       if (!Array.isArray(data.notes) || typeof data.diary !== "object") throw new Error("bad shape");
       if (!confirm("현재 데이터를 백업 파일 내용으로 바꿀까요? (노트 " + data.notes.length + "개)")) return;
-      db = Object.assign({ notes: [], diary: {}, trash: [], settings: { theme: "system" } }, data);
+      db = Object.assign({ notes: [], diary: {}, trash: [], folders: [], settings: { theme: "system" } }, data);
       ui.noteId = null;
       persist();
       renderAll();
@@ -1380,7 +1511,7 @@ function importData(file) {
 }
 function clearAll() {
   if (!confirm("노트와 다이어리를 모두 삭제할까요? 되돌릴 수 없어요.")) return;
-  db = { notes: [], diary: {}, trash: [], settings: db.settings };
+  db = { notes: [], diary: {}, trash: [], folders: [], settings: db.settings };
   if (idb) idbClear("photos").catch(() => {});
   urlCache.forEach((u) => URL.revokeObjectURL(u));
   urlCache.clear();
@@ -1392,12 +1523,13 @@ function clearAll() {
 /* ---------- 데모 데이터 (#demo) ---------- */
 function seedDemo() {
   if (db.notes.length || Object.keys(db.diary).length) return;
+  db.folders = ["회사", "일상"];
   const now = Date.now(), H = 3600 * 1000;
   db.notes = [
     { id: uid() + "a", title: "폴드8 구매 체크리스트", body: "☑ 색상: 라벤더\n☑ 용량: 512GB\n☐ 케이스, 보호필름 주문\n☐ 통신사 보상 프로그램 비교", pinned: true, createdAt: now - 50 * H, updatedAt: now - 2 * H },
-    { id: uid() + "b", title: "주간 회의 메모", body: "8월 목표 점검\n- 앱 프로토타입 공유\n- 다음 주 일정 조율\n- 리뷰 반영 사항 정리", pinned: false, createdAt: now - 30 * H, updatedAt: now - 20 * H },
+    { id: uid() + "b", title: "주간 회의 메모", body: "8월 목표 점검\n- 앱 프로토타입 공유\n- 다음 주 일정 조율\n- 리뷰 반영 사항 정리", pinned: false, folder: "회사", createdAt: now - 30 * H, updatedAt: now - 20 * H },
     { id: uid() + "c", title: "읽고 싶은 책", body: "1. 도둑맞은 집중력\n2. 아주 작은 습관의 힘\n3. 데미안 (다시 읽기)", pinned: false, createdAt: now - 80 * H, updatedAt: now - 60 * H },
-    { id: uid() + "d", title: "제주 여행 준비물", body: "항공권 예약 완료\n렌터카 비교하기\n숙소: 애월 쪽으로\n우비, 선크림, 충전기", pinned: false, createdAt: now - 100 * H, updatedAt: now - 90 * H }
+    { id: uid() + "d", title: "제주 여행 준비물", body: "항공권 예약 완료\n렌터카 비교하기\n숙소: 애월 쪽으로\n우비, 선크림, 충전기", pinned: false, folder: "일상", createdAt: now - 100 * H, updatedAt: now - 90 * H }
   ];
   const base = new Date();
   const mk = (offset, mood, weather, body, acts) => {
@@ -1413,6 +1545,15 @@ function seedDemo() {
   const pm = new Date(base.getFullYear(), base.getMonth() - 1, base.getDate());
   const pmk = ymd(pm);
   db.diary[pmk] = { date: pmk, mood: "🙂", weather: "☀️", acts: ["✈️"], body: "폴드8 언팩을 기다리며 여행 계획을 세웠다.", updatedAt: pm.getTime() };
+  /* 연간 히트맵용: 지난 몇 달치 기분만 있는 기록을 듬성듬성 채운다 */
+  for (let off = 8; off <= 230; off++) {
+    const r = (off * 2654435761) % 100;
+    if (r < 45) continue;
+    const mood = MOODS[[0, 1, 1, 2, 1, 0, 3, 1, 2, 4][r % 10]][0];
+    const d = new Date(base.getFullYear(), base.getMonth(), base.getDate() - off);
+    const k = ymd(d);
+    if (!db.diary[k]) db.diary[k] = { date: k, mood: mood, weather: null, acts: [], body: "", updatedAt: d.getTime() };
+  }
   persist();
 }
 
@@ -1432,6 +1573,8 @@ function buildPickers() {
     '<button class="pick-btn" data-v="' + e + '"><span class="pe">' + e + '</span><span class="pl">' + l + "</span></button>").join("");
   $("#act-picker").innerHTML = ACTS.map(([e, l]) =>
     '<button class="pick-btn" data-v="' + e + '"><span class="pe">' + e + '</span><span class="pl">' + l + "</span></button>").join("");
+  $("#tmpl-row").innerHTML = TEMPLATES.map(([label], i) =>
+    '<button class="chip" data-tmpl="' + i + '">' + label + "</button>").join("");
 }
 function bind() {
   $$(".nav-btn").forEach((b) => b.addEventListener("click", () => setTab(b.dataset.tab)));
@@ -1456,6 +1599,45 @@ function bind() {
   $("#cal-grid").addEventListener("click", (ev) => {
     const cell = ev.target.closest("[data-date]");
     if (cell) selectDate(cell.dataset.date);
+  });
+  $("#year-grid").addEventListener("click", (ev) => {
+    const cell = ev.target.closest("[data-date]");
+    if (cell) selectDate(cell.dataset.date);
+  });
+  $("#year-toggle").addEventListener("click", () => {
+    ui.calMode = ui.calMode === "year" ? "month" : "year";
+    renderCalendar();
+  });
+  $("#folder-row").addEventListener("click", (ev) => {
+    if (ev.target.closest("[data-new-folder]")) { addFolder(); return; }
+    const chip = ev.target.closest("[data-folder]");
+    if (!chip) return;
+    ui.folder = chip.dataset.folder;
+    renderNoteList();
+  });
+  $("#folder-select").addEventListener("change", (ev) => {
+    const n = noteById(ui.noteId);
+    if (!n) return;
+    let v = ev.target.value;
+    if (v === "__new__") {
+      const created = addFolder();
+      v = created || (n.folder || "");
+    }
+    n.folder = v;
+    n.updatedAt = Date.now();
+    persist();
+    renderEditor();
+    renderNoteList();
+  });
+  $("#tmpl-row").addEventListener("click", (ev) => {
+    const chip = ev.target.closest("[data-tmpl]");
+    if (!chip) return;
+    const t = TEMPLATES[Number(chip.dataset.tmpl)];
+    if (!t) return;
+    $("#diary-body").value = t[1];
+    onDiaryInput();
+    $("#tmpl-row").hidden = true;
+    $("#diary-body").focus();
   });
   $("#prev-month").addEventListener("click", () => shiftMonth(-1));
   $("#next-month").addEventListener("click", () => shiftMonth(1));
