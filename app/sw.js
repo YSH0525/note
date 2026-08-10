@@ -1,4 +1,4 @@
-const CACHE = "foldnote-v3";
+const CACHE = "foldnote-v4";
 const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", (e) => {
