@@ -27,4 +27,3 @@
 
 - 배포 주소: **https://ysh0525.github.io/note/**
 - 폴드8 브라우저에서 이 주소를 열고 **"홈 화면에 추가"** 하면 일반 앱처럼 설치된다(오프라인·앱 바로가기 지원)
-- 최초 1회: Actions 실행이 Pages 설정 문제로 실패하면 저장소 **Settings → Pages → Source를 "GitHub Actions"** 로 지정 후 재실행
