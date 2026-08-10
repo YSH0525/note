@@ -358,6 +358,49 @@ button { background: none; border: 0; cursor: pointer; }
 .pick-btn.active { background: var(--accent-soft); border-color: var(--accent); }
 .pick-btn.active .pl { color: var(--accent); font-weight: 600; }
 .diary-editor .body-input { margin-top: 8px; border-top: 1px dashed var(--line); padding-top: 14px; }
+.editor-top { display: flex; flex-direction: column; flex: none; min-height: 0; }
+
+/* ---------- 사진 첨부 ---------- */
+.photo-strip { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 20px 0; }
+.photo-strip:empty { display: none; }
+.photo-strip img {
+  width: 72px; height: 72px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  cursor: pointer;
+}
+.viewer {
+  position: fixed;
+  inset: 0;
+  background: rgba(12, 10, 18, .88);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+}
+.viewer[hidden] { display: none; }
+.viewer-bar { display: flex; justify-content: space-between; padding: 10px 14px; }
+.viewer-bar button { color: #fff; font-size: 15px; padding: 8px 14px; border-radius: 10px; }
+.viewer-bar button:hover { background: rgba(255, 255, 255, .15); }
+.viewer img { flex: 1; min-height: 0; width: 100%; object-fit: contain; padding: 0 10px 16px; }
+
+/* ---------- 페이지 넘김 모션 ---------- */
+.slide-left { animation: slideL .25s ease; }
+.slide-right { animation: slideR .25s ease; }
+@keyframes slideL { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
+@keyframes slideR { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: none; } }
+
+/* ---------- 플렉스 모드: 반 접으면 위=보기, 아래=쓰기 ---------- */
+.app.flex .editor { overflow: hidden; }
+.app.flex .editor-top { flex: 1; overflow-y: auto; min-height: 0; }
+.app.flex .body-input {
+  flex: none;
+  height: 50dvh;
+  margin-top: 0;
+  border-top: 1px solid var(--line);
+  box-shadow: inset 0 16px 18px -14px var(--hinge);
+  background: var(--paper2);
+}
 
 /* ---------- 다이어리 통계 ---------- */
 .stats {
@@ -570,11 +613,15 @@ button { background: none; border: 0; cursor: pointer; }
             <button class="icon-btn back" data-back aria-label="목록으로">←</button>
             <span class="meta" id="note-meta"></span>
             <span class="spacer"></span>
+            <button class="icon-btn" id="note-photo-btn" title="사진 첨부">📷</button>
             <button class="icon-btn" id="check-btn" title="체크리스트로 전환">☑</button>
             <button class="icon-btn" id="pin-btn" title="위로 고정">📌</button>
             <button class="icon-btn danger" id="del-note" title="노트 삭제">🗑</button>
           </div>
-          <input class="title-input" id="note-title" placeholder="제목" autocomplete="off">
+          <div class="editor-top">
+            <input class="title-input" id="note-title" placeholder="제목" autocomplete="off">
+            <div class="photo-strip" id="note-photos"></div>
+          </div>
           <textarea class="body-input" id="note-body" placeholder="내용을 입력하세요…"></textarea>
         </div>
         <div class="empty" id="editor-empty">
@@ -608,12 +655,16 @@ button { background: none; border: 0; cursor: pointer; }
             <button class="icon-btn back" data-back aria-label="달력으로">←</button>
             <span class="meta" id="diary-date-label"></span>
             <span class="spacer"></span>
+            <button class="icon-btn" id="diary-photo-btn" title="사진 첨부">📷</button>
             <button class="icon-btn danger" id="del-diary" title="이 날 기록 지우기">🗑</button>
           </div>
-          <div class="picker-row"><span class="picker-label">기분</span><div class="picker" id="mood-picker"></div></div>
-          <div class="picker-row"><span class="picker-label">날씨</span><div class="picker" id="weather-picker"></div></div>
-          <div class="picker-row"><span class="picker-label">활동</span><div class="picker" id="act-picker"></div></div>
-          <div id="memory-slot"></div>
+          <div class="editor-top">
+            <div class="picker-row"><span class="picker-label">기분</span><div class="picker" id="mood-picker"></div></div>
+            <div class="picker-row"><span class="picker-label">날씨</span><div class="picker" id="weather-picker"></div></div>
+            <div class="picker-row"><span class="picker-label">활동</span><div class="picker" id="act-picker"></div></div>
+            <div id="memory-slot"></div>
+            <div class="photo-strip" id="diary-photos"></div>
+          </div>
           <textarea class="body-input" id="diary-body" placeholder="오늘 하루는 어땠나요?"></textarea>
         </div>
       </div>
@@ -636,6 +687,7 @@ button { background: none; border: 0; cursor: pointer; }
           <div class="card">
             <h2>데이터</h2>
             <p class="hint" id="data-stats"></p>
+            <p class="hint">첨부한 사진은 JSON 내보내기에 포함되지 않아요.</p>
             <div class="btn-row">
               <button class="btn" id="export-btn">JSON 내보내기</button>
               <label class="btn">가져오기<input type="file" id="import-input" accept="application/json,.json" hidden></label>
@@ -677,6 +729,15 @@ button { background: none; border: 0; cursor: pointer; }
   </nav>
 </div>
 
+<div class="viewer" id="viewer" hidden>
+  <div class="viewer-bar">
+    <button id="viewer-del">🗑 삭제</button>
+    <button id="viewer-close">✕ 닫기</button>
+  </div>
+  <img id="viewer-img" alt="첨부 사진">
+</div>
+<input type="file" id="photo-input" accept="image/*" multiple hidden>
+
 <div class="lock" id="lock" hidden>
   <div class="logo" role="img" aria-label="폴드노트"></div>
   <p>PIN을 입력해 잠금을 해제하세요</p>
@@ -698,7 +759,49 @@ const MOOD_COLORS = { "😄": "#F5A623", "🙂": "#7CC576", "😐": "#9AA0AB", "
 const CHK_EMPTY = "☐", CHK_DONE = "☑";
 const TRASH_KEEP_MS = 30 * 24 * 3600 * 1000;
 
-function load() {
+/* ---------- 저장소: IndexedDB (localStorage에서 자동 이전) ---------- */
+let idb = null;
+function openDb() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open("foldnote", 1);
+    req.onupgradeneeded = () => {
+      const d = req.result;
+      if (!d.objectStoreNames.contains("kv")) d.createObjectStore("kv");
+      if (!d.objectStoreNames.contains("photos")) d.createObjectStore("photos");
+    };
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => rej(req.error);
+  });
+}
+function idbGet(store, key) {
+  return new Promise((res, rej) => {
+    const r = idb.transaction(store).objectStore(store).get(key);
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+}
+function idbPut(store, key, val) {
+  return new Promise((res, rej) => {
+    const r = idb.transaction(store, "readwrite").objectStore(store).put(val, key);
+    r.onsuccess = () => res();
+    r.onerror = () => rej(r.error);
+  });
+}
+function idbDel(store, key) {
+  return new Promise((res, rej) => {
+    const r = idb.transaction(store, "readwrite").objectStore(store).delete(key);
+    r.onsuccess = () => res();
+    r.onerror = () => rej(r.error);
+  });
+}
+function idbClear(store) {
+  return new Promise((res, rej) => {
+    const r = idb.transaction(store, "readwrite").objectStore(store).clear();
+    r.onsuccess = () => res();
+    r.onerror = () => rej(r.error);
+  });
+}
+function loadLocal() {
   try {
     const raw = localStorage.getItem(KEY);
     if (raw) return Object.assign({ notes: [], diary: {}, trash: [], settings: { theme: "system" } }, JSON.parse(raw));
@@ -706,11 +809,24 @@ function load() {
   return { notes: [], diary: {}, trash: [], settings: { theme: "system" } };
 }
 function persist() {
-  try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) { /* 저장 공간 부족 등 */ }
+  if (idb) idbPut("kv", "db", db).catch(() => {});
+  else try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) { /* 저장 공간 부족 등 */ }
+}
+async function initStorage() {
+  try { idb = await openDb(); } catch (e) { idb = null; }
+  if (idb) {
+    const stored = await idbGet("kv", "db").catch(() => null);
+    if (stored) db = Object.assign({ notes: [], diary: {}, trash: [], settings: { theme: "system" } }, stored);
+    else { db = loadLocal(); idbPut("kv", "db", db).catch(() => {}); }
+  } else {
+    db = loadLocal();
+  }
+  const expired = (db.trash || []).filter((t) => Date.now() - t.deletedAt >= TRASH_KEEP_MS);
+  expired.forEach(deletePhotosOf);
+  db.trash = (db.trash || []).filter((t) => Date.now() - t.deletedAt < TRASH_KEEP_MS);
 }
 
-let db = load();
-db.trash = (db.trash || []).filter((t) => Date.now() - t.deletedAt < TRASH_KEEP_MS);
+let db = { notes: [], diary: {}, trash: [], settings: { theme: "system" } };
 const ui = {
   tab: "notes",
   noteId: null,
@@ -783,6 +899,7 @@ function renderEditor() {
   $("#note-body").value = n.body;
   $("#pin-btn").classList.toggle("active", !!n.pinned);
   renderNoteMeta(n);
+  renderStrip("#note-photos", n.photoIds, "note");
 }
 function renderNoteMeta(n) {
   $("#note-meta").textContent = fmtDT(n.updatedAt) + " 수정 · " + n.body.length + "자";
@@ -862,6 +979,99 @@ function onBodyClick() {
   }
 }
 
+/* ---------- 사진 첨부 ---------- */
+const urlCache = new Map();
+let photoTarget = null;
+async function photoUrl(id) {
+  if (urlCache.has(id)) return urlCache.get(id);
+  if (!idb) return null;
+  const blob = await idbGet("photos", id).catch(() => null);
+  if (!blob) return null;
+  const u = URL.createObjectURL(blob);
+  urlCache.set(id, u);
+  return u;
+}
+function deletePhotosOf(obj) {
+  (obj.photoIds || []).forEach((id) => {
+    if (idb) idbDel("photos", id).catch(() => {});
+    const u = urlCache.get(id);
+    if (u) { URL.revokeObjectURL(u); urlCache.delete(id); }
+  });
+}
+function resizeImage(file) {
+  return createImageBitmap(file).then((bmp) => {
+    const max = 1600;
+    const scale = Math.min(1, max / Math.max(bmp.width, bmp.height));
+    const w = Math.round(bmp.width * scale), h = Math.round(bmp.height * scale);
+    const cv = document.createElement("canvas");
+    cv.width = w; cv.height = h;
+    cv.getContext("2d").drawImage(bmp, 0, 0, w, h);
+    return new Promise((res, rej) => cv.toBlob((b) => b ? res(b) : rej(new Error("toBlob")), "image/jpeg", .82));
+  });
+}
+async function addPhotos(files) {
+  if (!idb) { alert("이 브라우저에서는 사진 첨부를 지원하지 않아요."); return; }
+  const ids = [];
+  for (const f of files) {
+    try {
+      const blob = await resizeImage(f);
+      const id = "p" + uid();
+      await idbPut("photos", id, blob);
+      ids.push(id);
+    } catch (e) { /* 이미지가 아니거나 손상된 파일은 건너뜀 */ }
+  }
+  if (!ids.length) return;
+  if (photoTarget === "note") {
+    const n = noteById(ui.noteId);
+    if (!n) return;
+    n.photoIds = (n.photoIds || []).concat(ids);
+    n.updatedAt = Date.now();
+    persist();
+    renderEditor();
+  } else {
+    const e = ensureEntry(ui.diaryDate);
+    e.photoIds = (e.photoIds || []).concat(ids);
+    e.updatedAt = Date.now();
+    persist();
+    renderDiaryEditor();
+    renderCalendar();
+  }
+}
+async function renderStrip(sel, ids, owner) {
+  const el = $(sel);
+  const arr = ids || [];
+  if (!arr.length) { el.innerHTML = ""; return; }
+  const parts = await Promise.all(arr.map(async (id) => {
+    const u = await photoUrl(id);
+    return u ? '<img src="' + u + '" data-photo="' + id + '" data-owner="' + owner + '" alt="첨부 사진">' : "";
+  }));
+  el.innerHTML = parts.join("");
+}
+function openViewer(id, owner) {
+  photoUrl(id).then((u) => {
+    if (!u) return;
+    const v = $("#viewer");
+    v.dataset.photo = id;
+    v.dataset.owner = owner;
+    $("#viewer-img").src = u;
+    v.hidden = false;
+  });
+}
+function removePhoto(owner, id) {
+  if (owner === "note") {
+    const n = noteById(ui.noteId);
+    if (n) { n.photoIds = (n.photoIds || []).filter((x) => x !== id); n.updatedAt = Date.now(); }
+  } else {
+    const e = entryFor(ui.diaryDate);
+    if (e) { e.photoIds = (e.photoIds || []).filter((x) => x !== id); e.updatedAt = Date.now(); pruneEntry(ui.diaryDate); }
+  }
+  deletePhotosOf({ photoIds: [id] });
+  persist();
+  renderEditor();
+  renderDiaryEditor();
+  renderCalendar();
+}
+
 /* ---------- 휴지통 ---------- */
 function restoreNote(id) {
   const i = db.trash.findIndex((t) => t.id === id);
@@ -875,6 +1085,7 @@ function restoreNote(id) {
 }
 function purgeNote(id) {
   if (!confirm("이 노트를 완전히 삭제할까요? 되돌릴 수 없어요.")) return;
+  db.trash.filter((t) => t.id === id).forEach(deletePhotosOf);
   db.trash = db.trash.filter((t) => t.id !== id);
   persist();
   renderSettings();
@@ -882,6 +1093,7 @@ function purgeNote(id) {
 function emptyTrash() {
   if (!db.trash.length) return;
   if (!confirm("휴지통의 노트 " + db.trash.length + "개를 완전히 삭제할까요? 되돌릴 수 없어요.")) return;
+  db.trash.forEach(deletePhotosOf);
   db.trash = [];
   persist();
   renderSettings();
@@ -909,7 +1121,7 @@ function ensureEntry(date) {
 }
 function pruneEntry(date) {
   const e = db.diary[date];
-  if (e && !e.mood && !e.weather && !(e.acts && e.acts.length) && !e.body.trim()) delete db.diary[date];
+  if (e && !e.mood && !e.weather && !(e.acts && e.acts.length) && !(e.photoIds && e.photoIds.length) && !e.body.trim()) delete db.diary[date];
 }
 function renderCalendar() {
   const y = ui.month.getFullYear(), m = ui.month.getMonth();
@@ -1008,6 +1220,7 @@ function renderDiaryEditor() {
   $$("#weather-picker .pick-btn").forEach((b) => b.classList.toggle("active", b.dataset.v === e.weather));
   $$("#act-picker .pick-btn").forEach((b) => b.classList.toggle("active", acts.includes(b.dataset.v)));
   renderMemories();
+  renderStrip("#diary-photos", e.photoIds, "diary");
 }
 function selectDate(date) {
   ui.diaryDate = date;
@@ -1046,8 +1259,10 @@ function togglePickerValue(field, v) {
   renderCalendar();
 }
 function deleteDiary() {
-  if (!entryFor(ui.diaryDate)) return;
+  const e = entryFor(ui.diaryDate);
+  if (!e) return;
   if (!confirm(fmtKDate(ui.diaryDate) + " 기록을 지울까요?")) return;
+  deletePhotosOf(e);
   delete db.diary[ui.diaryDate];
   persist();
   renderDiaryEditor();
@@ -1056,6 +1271,21 @@ function deleteDiary() {
 function shiftMonth(n) {
   ui.month = new Date(ui.month.getFullYear(), ui.month.getMonth() + n, 1);
   renderCalendar();
+  const g = $("#cal-grid");
+  g.classList.remove("slide-left", "slide-right");
+  void g.offsetWidth; // 애니메이션 재시작
+  g.classList.add(n > 0 ? "slide-left" : "slide-right");
+}
+
+/* ---------- 플렉스 모드 감지 ---------- */
+function updatePosture() {
+  const forced = location.hash.includes("flex");
+  let folded = false;
+  try {
+    // 반 접힘 + 세로 방향(힌지가 가로로 눕는 노트북 자세)에서만 상/하 분할
+    folded = matchMedia("(device-posture: folded) and (orientation: portrait) and (min-width: 500px)").matches;
+  } catch (e) { /* 미지원 브라우저 */ }
+  $("#app").classList.toggle("flex", forced || folded);
 }
 
 /* ---------- 설정 ---------- */
@@ -1151,6 +1381,9 @@ function importData(file) {
 function clearAll() {
   if (!confirm("노트와 다이어리를 모두 삭제할까요? 되돌릴 수 없어요.")) return;
   db = { notes: [], diary: {}, trash: [], settings: db.settings };
+  if (idb) idbClear("photos").catch(() => {});
+  urlCache.forEach((u) => URL.revokeObjectURL(u));
+  urlCache.clear();
   ui.noteId = null;
   persist();
   renderAll();
@@ -1275,6 +1508,32 @@ function bind() {
       renderLockCard();
     }
   });
+  $("#note-photo-btn").addEventListener("click", () => { if (noteById(ui.noteId)) { photoTarget = "note"; $("#photo-input").click(); } });
+  $("#diary-photo-btn").addEventListener("click", () => { photoTarget = "diary"; $("#photo-input").click(); });
+  $("#photo-input").addEventListener("change", (ev) => {
+    if (ev.target.files.length) addPhotos([...ev.target.files]);
+    ev.target.value = "";
+  });
+  ["#note-photos", "#diary-photos"].forEach((sel) => {
+    $(sel).addEventListener("click", (ev) => {
+      const img = ev.target.closest("[data-photo]");
+      if (img) openViewer(img.dataset.photo, img.dataset.owner);
+    });
+  });
+  $("#viewer-close").addEventListener("click", () => { $("#viewer").hidden = true; });
+  $("#viewer").addEventListener("click", (ev) => { if (ev.target === $("#viewer")) $("#viewer").hidden = true; });
+  $("#viewer-del").addEventListener("click", () => {
+    const v = $("#viewer");
+    if (!confirm("이 사진을 삭제할까요?")) return;
+    removePhoto(v.dataset.owner, v.dataset.photo);
+    v.hidden = true;
+  });
+  try {
+    const pm = matchMedia("(device-posture: folded)");
+    if (pm.addEventListener) pm.addEventListener("change", updatePosture);
+  } catch (e) { /* 미지원 브라우저 */ }
+  window.addEventListener("resize", updatePosture);
+  window.addEventListener("hashchange", updatePosture);
   $("#lock-open").addEventListener("click", tryUnlock);
   $("#lock-input").addEventListener("keydown", (ev) => { if (ev.key === "Enter") tryUnlock(); });
   document.addEventListener("visibilitychange", () => {
@@ -1295,18 +1554,28 @@ function bind() {
   if (wideMq.addEventListener) wideMq.addEventListener("change", onLayoutChange);
 }
 
-if (location.hash === "#demo") seedDemo();
-buildPickers();
-bind();
-setTab("notes");
-/* 펼침 화면에서는 최근 노트를 바로 보여준다 (커버 화면은 목록 먼저) */
-if (wideMq.matches && visibleNotes().length) ui.noteId = visibleNotes()[0].id;
-renderAll();
-if (db.settings.pinHash) lockNow();
-
-if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
-  navigator.serviceWorker.register("./sw.js").catch(() => { /* 미지원 환경 */ });
-}
+(async function start() {
+  await initStorage();
+  if (location.hash.includes("demo")) seedDemo();
+  buildPickers();
+  bind();
+  updatePosture();
+  if (location.hash.includes("today")) {
+    ui.diaryDate = ymd(new Date());
+    ui.month = startOfMonth(new Date());
+    setTab("diary");
+  } else {
+    setTab("notes");
+    /* 펼침 화면에서는 최근 노트를 바로 보여준다 (커버 화면은 목록 먼저) */
+    if (wideMq.matches && visibleNotes().length) ui.noteId = visibleNotes()[0].id;
+  }
+  renderAll();
+  if (location.hash.includes("new")) newNote();
+  if (db.settings.pinHash) lockNow();
+  if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+    navigator.serviceWorker.register("./sw.js").catch(() => { /* 미지원 환경 */ });
+  }
+})();
 </script>
 </body>
 </html>
