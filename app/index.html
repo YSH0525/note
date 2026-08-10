@@ -359,6 +359,99 @@ button { background: none; border: 0; cursor: pointer; }
 .pick-btn.active .pl { color: var(--accent); font-weight: 600; }
 .diary-editor .body-input { margin-top: 8px; border-top: 1px dashed var(--line); padding-top: 14px; }
 
+/* ---------- 다이어리 통계 ---------- */
+.stats {
+  margin: 8px 12px 4px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: var(--shadow);
+}
+.stats-row { display: flex; gap: 14px; }
+.stat { flex: 1; }
+.stat b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 11.5px; color: var(--ink2); }
+.stats h3 { font-size: 12px; color: var(--ink2); font-weight: 600; margin: 12px 0 6px; }
+.mood-bar {
+  display: flex;
+  height: 10px;
+  border-radius: 99px;
+  overflow: hidden;
+  background: var(--accent-soft);
+}
+.mood-bar i { display: block; height: 100%; }
+.mood-legend { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12px; color: var(--ink2); margin-top: 6px; }
+
+/* ---------- 지난 오늘 ---------- */
+.memory {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: calc(100% - 40px);
+  margin: 10px 20px 0;
+  background: var(--accent-soft);
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 13px;
+  text-align: left;
+}
+.memory:hover { border-color: var(--accent); }
+.memory .m-when { color: var(--accent); font-weight: 700; flex: none; }
+.memory .m-body { color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---------- 휴지통 ---------- */
+.trash-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 0;
+  border-top: 1px solid var(--line);
+  font-size: 13.5px;
+}
+.trash-item:first-child { border-top: 0; }
+.trash-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.trash-date { color: var(--ink2); font-size: 11.5px; flex: none; font-variant-numeric: tabular-nums; }
+.link-btn { color: var(--accent); font-size: 12.5px; padding: 4px 8px; border-radius: 8px; flex: none; }
+.link-btn:hover { background: var(--accent-soft); }
+.link-btn.danger { color: var(--danger); }
+
+/* ---------- PIN 잠금 ---------- */
+.lock {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  z-index: 50;
+}
+.lock[hidden] { display: none; }
+.lock .logo { width: 52px; height: 52px; border-radius: 16px; margin: 0 0 6px; }
+.lock p { color: var(--ink2); font-size: 14px; }
+.lock input {
+  border: 1px solid var(--line);
+  background: var(--paper);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 20px;
+  letter-spacing: .4em;
+  text-align: center;
+  width: 200px;
+}
+.lock input:focus { outline: none; border-color: var(--accent); }
+.lock .err { color: var(--danger); font-size: 13px; min-height: 18px; }
+.btn-accent {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-radius: 12px;
+  padding: 10px 28px;
+  font-weight: 600;
+}
+
 /* ---------- 설정 ---------- */
 .settings { padding: 4px 16px 90px; display: flex; flex-direction: column; gap: 12px; }
 .card {
@@ -477,6 +570,7 @@ button { background: none; border: 0; cursor: pointer; }
             <button class="icon-btn back" data-back aria-label="목록으로">←</button>
             <span class="meta" id="note-meta"></span>
             <span class="spacer"></span>
+            <button class="icon-btn" id="check-btn" title="체크리스트로 전환">☑</button>
             <button class="icon-btn" id="pin-btn" title="위로 고정">📌</button>
             <button class="icon-btn danger" id="del-note" title="노트 삭제">🗑</button>
           </div>
@@ -504,6 +598,7 @@ button { background: none; border: 0; cursor: pointer; }
         <div class="scroll">
           <div class="cal-dow" aria-hidden="true"><span class="sun">일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span class="sat">토</span></div>
           <div class="cal-grid" id="cal-grid"></div>
+          <div class="stats" id="diary-stats"></div>
           <p class="cal-hint">기록한 날에는 기분 이모지가 표시돼요.</p>
         </div>
       </div>
@@ -517,6 +612,8 @@ button { background: none; border: 0; cursor: pointer; }
           </div>
           <div class="picker-row"><span class="picker-label">기분</span><div class="picker" id="mood-picker"></div></div>
           <div class="picker-row"><span class="picker-label">날씨</span><div class="picker" id="weather-picker"></div></div>
+          <div class="picker-row"><span class="picker-label">활동</span><div class="picker" id="act-picker"></div></div>
+          <div id="memory-slot"></div>
           <textarea class="body-input" id="diary-body" placeholder="오늘 하루는 어땠나요?"></textarea>
         </div>
       </div>
@@ -546,6 +643,16 @@ button { background: none; border: 0; cursor: pointer; }
             </div>
           </div>
           <div class="card">
+            <h2>잠금</h2>
+            <p class="hint" id="lock-status"></p>
+            <div class="btn-row" id="lock-btns"></div>
+          </div>
+          <div class="card">
+            <h2>휴지통</h2>
+            <p class="hint">삭제한 노트는 30일 동안 보관한 뒤 자동으로 지워져요.</p>
+            <div id="trash-list"></div>
+          </div>
+          <div class="card">
             <h2>폴드노트</h2>
             <p class="hint">갤럭시 Z 폴드8에 맞춘 노트·다이어리 앱.<br>커버 화면에서는 한 장씩, 펼치면 수첩 펼침면처럼 두 쪽으로 보여요.<br>모든 데이터는 이 기기(브라우저)에만 저장됩니다.</p>
           </div>
@@ -570,6 +677,14 @@ button { background: none; border: 0; cursor: pointer; }
   </nav>
 </div>
 
+<div class="lock" id="lock" hidden>
+  <div class="logo" role="img" aria-label="폴드노트"></div>
+  <p>PIN을 입력해 잠금을 해제하세요</p>
+  <input id="lock-input" type="password" inputmode="numeric" maxlength="8" autocomplete="off" aria-label="PIN 입력">
+  <p class="err" id="lock-err"></p>
+  <button class="btn-accent" id="lock-open">잠금 해제</button>
+</div>
+
 <script>
 "use strict";
 const KEY = "foldnote.v1";
@@ -578,19 +693,24 @@ const $$ = (s) => Array.from(document.querySelectorAll(s));
 const DOW = ["일", "월", "화", "수", "목", "금", "토"];
 const MOODS = [["😄", "최고"], ["🙂", "좋음"], ["😐", "보통"], ["😔", "우울"], ["😢", "슬픔"], ["😤", "화남"]];
 const WEATHER = [["☀️", "맑음"], ["⛅", "조금 흐림"], ["☁️", "흐림"], ["🌧️", "비"], ["🌨️", "눈"], ["🌬️", "바람"]];
+const ACTS = [["🏃", "운동"], ["💼", "일"], ["📚", "공부"], ["👥", "모임"], ["✈️", "여행"], ["🍽️", "맛집"], ["🎮", "게임"], ["🛋️", "휴식"]];
+const MOOD_COLORS = { "😄": "#F5A623", "🙂": "#7CC576", "😐": "#9AA0AB", "😔": "#7E9BD0", "😢": "#5C79B8", "😤": "#D96C60" };
+const CHK_EMPTY = "☐", CHK_DONE = "☑";
+const TRASH_KEEP_MS = 30 * 24 * 3600 * 1000;
 
 function load() {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) return Object.assign({ notes: [], diary: {}, settings: { theme: "system" } }, JSON.parse(raw));
+    if (raw) return Object.assign({ notes: [], diary: {}, trash: [], settings: { theme: "system" } }, JSON.parse(raw));
   } catch (e) { /* 손상된 데이터는 초기화 */ }
-  return { notes: [], diary: {}, settings: { theme: "system" } };
+  return { notes: [], diary: {}, trash: [], settings: { theme: "system" } };
 }
 function persist() {
   try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) { /* 저장 공간 부족 등 */ }
 }
 
 let db = load();
+db.trash = (db.trash || []).filter((t) => Date.now() - t.deletedAt < TRASH_KEEP_MS);
 const ui = {
   tab: "notes",
   noteId: null,
@@ -694,8 +814,9 @@ function onNoteInput() {
 function deleteNote() {
   const n = noteById(ui.noteId);
   if (!n) return;
-  if (!confirm('노트 "' + (n.title.trim() || "제목 없음") + '"을(를) 삭제할까요?')) return;
+  if (!confirm('노트 "' + (n.title.trim() || "제목 없음") + '"을(를) 휴지통으로 옮길까요?\n30일 동안 보관 후 완전히 삭제돼요.')) return;
   db.notes = db.notes.filter((x) => x.id !== n.id);
+  db.trash.unshift(Object.assign({}, n, { deletedAt: Date.now() }));
   ui.noteId = null;
   persist();
   renderEditor();
@@ -703,15 +824,92 @@ function deleteNote() {
   setPane("list");
 }
 
+/* ---------- 체크리스트 ---------- */
+function lineBoundsAt(v, pos) {
+  const start = v.lastIndexOf("\n", pos - 1) + 1;
+  let end = v.indexOf("\n", pos);
+  if (end < 0) end = v.length;
+  return [start, end];
+}
+function replaceLine(ta, start, end, newLine, caretPos) {
+  const v = ta.value;
+  ta.value = v.slice(0, start) + newLine + v.slice(end);
+  ta.selectionStart = ta.selectionEnd = caretPos;
+  onNoteInput();
+}
+function cycleChecklist() {
+  const ta = $("#note-body");
+  if (!noteById(ui.noteId)) return;
+  const pos = ta.selectionStart || 0;
+  const [start, end] = lineBoundsAt(ta.value, pos);
+  const line = ta.value.slice(start, end);
+  let nl;
+  if (line.startsWith(CHK_EMPTY + " ")) nl = CHK_DONE + " " + line.slice(2);
+  else if (line.startsWith(CHK_DONE + " ")) nl = line.slice(2);
+  else nl = CHK_EMPTY + " " + line;
+  replaceLine(ta, start, end, nl, Math.max(start, pos + nl.length - line.length));
+  ta.focus();
+}
+function onBodyClick() {
+  const ta = $("#note-body");
+  const pos = ta.selectionStart || 0;
+  const [start, end] = lineBoundsAt(ta.value, pos);
+  const line = ta.value.slice(start, end);
+  const ch = line.slice(0, 1);
+  if ((ch === CHK_EMPTY || ch === CHK_DONE) && pos - start <= 1) {
+    const nl = (ch === CHK_EMPTY ? CHK_DONE : CHK_EMPTY) + line.slice(1);
+    replaceLine(ta, start, end, nl, pos);
+  }
+}
+
+/* ---------- 휴지통 ---------- */
+function restoreNote(id) {
+  const i = db.trash.findIndex((t) => t.id === id);
+  if (i < 0) return;
+  const n = db.trash.splice(i, 1)[0];
+  delete n.deletedAt;
+  db.notes.unshift(n);
+  persist();
+  renderNoteList();
+  renderSettings();
+}
+function purgeNote(id) {
+  if (!confirm("이 노트를 완전히 삭제할까요? 되돌릴 수 없어요.")) return;
+  db.trash = db.trash.filter((t) => t.id !== id);
+  persist();
+  renderSettings();
+}
+function emptyTrash() {
+  if (!db.trash.length) return;
+  if (!confirm("휴지통의 노트 " + db.trash.length + "개를 완전히 삭제할까요? 되돌릴 수 없어요.")) return;
+  db.trash = [];
+  persist();
+  renderSettings();
+}
+function renderTrashList() {
+  const el = $("#trash-list");
+  if (!db.trash.length) {
+    el.innerHTML = '<p class="hint">휴지통이 비어 있어요.</p>';
+    return;
+  }
+  el.innerHTML = db.trash.map((t) =>
+    '<div class="trash-item"><span class="trash-title">' + esc(t.title.trim() || "제목 없음") + "</span>" +
+    '<span class="trash-date">' + fmtShort(t.deletedAt) + " 삭제</span>" +
+    '<button class="link-btn" data-restore="' + t.id + '">복원</button>' +
+    '<button class="link-btn danger" data-purge="' + t.id + '">삭제</button></div>'
+  ).join("") +
+  '<div class="btn-row"><button class="btn danger" id="trash-empty">휴지통 비우기</button></div>';
+}
+
 /* ---------- 다이어리 ---------- */
 function entryFor(date) { return db.diary[date]; }
 function ensureEntry(date) {
-  if (!db.diary[date]) db.diary[date] = { date: date, mood: null, weather: null, body: "", updatedAt: Date.now() };
+  if (!db.diary[date]) db.diary[date] = { date: date, mood: null, weather: null, acts: [], body: "", updatedAt: Date.now() };
   return db.diary[date];
 }
 function pruneEntry(date) {
   const e = db.diary[date];
-  if (e && !e.mood && !e.weather && !e.body.trim()) delete db.diary[date];
+  if (e && !e.mood && !e.weather && !(e.acts && e.acts.length) && !e.body.trim()) delete db.diary[date];
 }
 function renderCalendar() {
   const y = ui.month.getFullYear(), m = ui.month.getMonth();
@@ -730,19 +928,104 @@ function renderCalendar() {
     html += '<button class="' + cls + '" data-date="' + date + '"><span class="d">' + d + "</span>" + mark + "</button>";
   }
   $("#cal-grid").innerHTML = html;
+  renderStats();
+}
+
+/* ---------- 통계 · 스트릭 ---------- */
+function streakDays() {
+  let s = 0;
+  const d = new Date();
+  if (!db.diary[ymd(d)]) d.setDate(d.getDate() - 1); // 오늘 아직 안 썼으면 어제까지의 연속을 센다
+  while (db.diary[ymd(d)]) { s++; d.setDate(d.getDate() - 1); }
+  return s;
+}
+function renderStats() {
+  const y = ui.month.getFullYear(), m = ui.month.getMonth();
+  const days = new Date(y, m + 1, 0).getDate();
+  const moodCounts = {}, actCounts = {};
+  let recorded = 0;
+  for (let d = 1; d <= days; d++) {
+    const e = db.diary[y + "-" + pad(m + 1) + "-" + pad(d)];
+    if (!e) continue;
+    recorded++;
+    if (e.mood) moodCounts[e.mood] = (moodCounts[e.mood] || 0) + 1;
+    (e.acts || []).forEach((a) => { actCounts[a] = (actCounts[a] || 0) + 1; });
+  }
+  const moodTotal = Object.values(moodCounts).reduce((a, b) => a + b, 0);
+  const usedMoods = MOODS.filter(([e]) => moodCounts[e]);
+  const bar = moodTotal
+    ? '<h3>기분 분포</h3><div class="mood-bar">' +
+      usedMoods.map(([e]) => '<i style="width:' + (moodCounts[e] / moodTotal * 100).toFixed(1) + '%;background:' + MOOD_COLORS[e] + '"></i>').join("") +
+      '</div><div class="mood-legend">' +
+      usedMoods.map(([e]) => "<span>" + e + " " + moodCounts[e] + "일</span>").join("") + "</div>"
+    : "";
+  const topActs = Object.entries(actCounts).sort((a, b) => b[1] - a[1]).slice(0, 3);
+  const actsHtml = topActs.length
+    ? '<h3>자주 한 활동</h3><div class="mood-legend">' +
+      topActs.map(([a, c]) => {
+        const label = (ACTS.find((x) => x[0] === a) || [])[1] || "";
+        return "<span>" + a + " " + label + " " + c + "회</span>";
+      }).join("") + "</div>"
+    : "";
+  $("#diary-stats").innerHTML =
+    '<div class="stats-row">' +
+    '<div class="stat"><b>' + recorded + '일</b><span>이 달의 기록</span></div>' +
+    '<div class="stat"><b>' + streakDays() + '일</b><span>연속 기록 🔥</span></div>' +
+    "</div>" + bar + actsHtml;
+}
+
+/* ---------- 지난 오늘 ---------- */
+function memoriesFor(date) {
+  const d = parseYmd(date);
+  const res = [];
+  Object.keys(db.diary).forEach((k) => {
+    if (k === date) return;
+    const kd = parseYmd(k);
+    if (kd < d && kd.getMonth() === d.getMonth() && kd.getDate() === d.getDate()) {
+      res.push({ label: (d.getFullYear() - kd.getFullYear()) + "년 전 오늘", e: db.diary[k] });
+    }
+  });
+  const prev = new Date(d.getFullYear(), d.getMonth() - 1, d.getDate());
+  const pk = ymd(prev);
+  if (pk !== date && db.diary[pk]) res.push({ label: "1개월 전 오늘", e: db.diary[pk] });
+  return res.slice(0, 2);
+}
+function renderMemories() {
+  const mems = memoriesFor(ui.diaryDate);
+  $("#memory-slot").innerHTML = mems.map((m) => {
+    const snippet = (m.e.body || "").split("\n")[0].slice(0, 40);
+    return '<button class="memory" data-date="' + m.e.date + '">' +
+      '<span class="m-when">🕰 ' + m.label + "</span>" +
+      '<span class="m-body">' + (m.e.mood ? m.e.mood + " " : "") + (esc(snippet) || "기록 보기") + "</span></button>";
+  }).join("");
 }
 function renderDiaryEditor() {
   const e = entryFor(ui.diaryDate) || {};
+  const acts = e.acts || [];
   $("#diary-date-label").textContent = fmtKDate(ui.diaryDate);
   $("#diary-body").value = e.body || "";
   $$("#mood-picker .pick-btn").forEach((b) => b.classList.toggle("active", b.dataset.v === e.mood));
   $$("#weather-picker .pick-btn").forEach((b) => b.classList.toggle("active", b.dataset.v === e.weather));
+  $$("#act-picker .pick-btn").forEach((b) => b.classList.toggle("active", acts.includes(b.dataset.v)));
+  renderMemories();
 }
 function selectDate(date) {
   ui.diaryDate = date;
+  ui.month = startOfMonth(parseYmd(date));
   renderDiaryEditor();
   renderCalendar();
   setPane("detail");
+}
+function toggleAct(v) {
+  const e = ensureEntry(ui.diaryDate);
+  e.acts = e.acts || [];
+  const i = e.acts.indexOf(v);
+  if (i >= 0) e.acts.splice(i, 1); else e.acts.push(v);
+  e.updatedAt = Date.now();
+  pruneEntry(ui.diaryDate);
+  persist();
+  renderDiaryEditor();
+  renderStats();
 }
 const refreshCalSoon = debounce(renderCalendar, 300);
 function onDiaryInput() {
@@ -786,10 +1069,59 @@ const wideMq = matchMedia("(min-width: 700px)");
 function renderSettings() {
   applyTheme();
   const dn = Object.keys(db.diary).length;
-  $("#data-stats").textContent = "노트 " + db.notes.length + "개 · 다이어리 " + dn + "일 기록";
+  $("#data-stats").textContent = "노트 " + db.notes.length + "개 · 다이어리 " + dn + "일 기록 · 휴지통 " + db.trash.length + "개";
   $("#layout-indicator").textContent = wideMq.matches
     ? "지금은 펼침(메인 화면) 레이아웃 — 두 쪽 펼침면으로 보여요."
     : "지금은 커버 화면 레이아웃 — 한 장씩 보여요.";
+  renderLockCard();
+  renderTrashList();
+}
+
+/* ---------- PIN 잠금 ---------- */
+function hashPin(pin) {
+  let h = 5381;
+  const s = "foldnote:" + pin;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(16);
+}
+function lockNow() {
+  if (!db.settings.pinHash) return;
+  $("#lock-input").value = "";
+  $("#lock-err").textContent = "";
+  $("#lock").hidden = false;
+  $("#lock-input").focus();
+}
+function tryUnlock() {
+  if (hashPin($("#lock-input").value) === db.settings.pinHash) {
+    $("#lock").hidden = true;
+  } else {
+    $("#lock-err").textContent = "PIN이 맞지 않아요. 다시 입력해 주세요.";
+    $("#lock-input").value = "";
+    $("#lock-input").focus();
+  }
+}
+function askNewPin() {
+  const p1 = prompt("사용할 PIN을 입력하세요 (숫자 4~8자리)");
+  if (p1 === null) return null;
+  if (!/^\d{4,8}$/.test(p1)) { alert("숫자 4~8자리로 입력해 주세요."); return null; }
+  const p2 = prompt("확인을 위해 한 번 더 입력해 주세요");
+  if (p2 !== p1) { alert("두 입력이 서로 달라요. 처음부터 다시 시도해 주세요."); return null; }
+  return p1;
+}
+function verifyCurrentPin() {
+  const cur = prompt("현재 PIN을 입력하세요");
+  if (cur === null) return false;
+  if (hashPin(cur) !== db.settings.pinHash) { alert("PIN이 맞지 않아요."); return false; }
+  return true;
+}
+function renderLockCard() {
+  const on = !!db.settings.pinHash;
+  $("#lock-status").textContent = on
+    ? "PIN 잠금이 켜져 있어요. 앱을 열거나 화면을 벗어났다 돌아오면 PIN을 물어봐요."
+    : "PIN을 설정하면 앱을 열 때 잠금 화면이 나타나요. 일기를 안전하게 지켜줘요.";
+  $("#lock-btns").innerHTML = on
+    ? '<button class="btn" data-lock-act="change">PIN 변경</button><button class="btn danger" data-lock-act="off">잠금 끄기</button>'
+    : '<button class="btn" data-lock-act="set">PIN 설정</button>';
 }
 function exportData() {
   const blob = new Blob([JSON.stringify(db, null, 2)], { type: "application/json" });
@@ -806,7 +1138,7 @@ function importData(file) {
       const data = JSON.parse(reader.result);
       if (!Array.isArray(data.notes) || typeof data.diary !== "object") throw new Error("bad shape");
       if (!confirm("현재 데이터를 백업 파일 내용으로 바꿀까요? (노트 " + data.notes.length + "개)")) return;
-      db = Object.assign({ notes: [], diary: {}, settings: { theme: "system" } }, data);
+      db = Object.assign({ notes: [], diary: {}, trash: [], settings: { theme: "system" } }, data);
       ui.noteId = null;
       persist();
       renderAll();
@@ -818,7 +1150,7 @@ function importData(file) {
 }
 function clearAll() {
   if (!confirm("노트와 다이어리를 모두 삭제할까요? 되돌릴 수 없어요.")) return;
-  db = { notes: [], diary: {}, settings: db.settings };
+  db = { notes: [], diary: {}, trash: [], settings: db.settings };
   ui.noteId = null;
   persist();
   renderAll();
@@ -829,22 +1161,25 @@ function seedDemo() {
   if (db.notes.length || Object.keys(db.diary).length) return;
   const now = Date.now(), H = 3600 * 1000;
   db.notes = [
-    { id: uid() + "a", title: "폴드8 구매 체크리스트", body: "색상: 라벤더 ✔\n용량: 512GB\n케이스, 보호필름 같이 주문\n통신사 보상 프로그램 비교하기", pinned: true, createdAt: now - 50 * H, updatedAt: now - 2 * H },
+    { id: uid() + "a", title: "폴드8 구매 체크리스트", body: "☑ 색상: 라벤더\n☑ 용량: 512GB\n☐ 케이스, 보호필름 주문\n☐ 통신사 보상 프로그램 비교", pinned: true, createdAt: now - 50 * H, updatedAt: now - 2 * H },
     { id: uid() + "b", title: "주간 회의 메모", body: "8월 목표 점검\n- 앱 프로토타입 공유\n- 다음 주 일정 조율\n- 리뷰 반영 사항 정리", pinned: false, createdAt: now - 30 * H, updatedAt: now - 20 * H },
     { id: uid() + "c", title: "읽고 싶은 책", body: "1. 도둑맞은 집중력\n2. 아주 작은 습관의 힘\n3. 데미안 (다시 읽기)", pinned: false, createdAt: now - 80 * H, updatedAt: now - 60 * H },
     { id: uid() + "d", title: "제주 여행 준비물", body: "항공권 예약 완료\n렌터카 비교하기\n숙소: 애월 쪽으로\n우비, 선크림, 충전기", pinned: false, createdAt: now - 100 * H, updatedAt: now - 90 * H }
   ];
   const base = new Date();
-  const mk = (offset, mood, weather, body) => {
+  const mk = (offset, mood, weather, body, acts) => {
     const d = new Date(base.getFullYear(), base.getMonth(), base.getDate() - offset);
     const k = ymd(d);
-    db.diary[k] = { date: k, mood: mood, weather: weather, body: body, updatedAt: d.getTime() };
+    db.diary[k] = { date: k, mood: mood, weather: weather, acts: acts || [], body: body, updatedAt: d.getTime() };
   };
-  mk(0, "😄", "☀️", "폴드8 개통! 펼쳤을 때 화면이 생각보다 훨씬 넓다. 노트 앱 만들 생각에 설렌다.");
-  mk(1, "🙂", "⛅", "오랜만에 한강 산책. 저녁엔 가족들과 삼계탕.");
-  mk(2, "😐", "🌧️", "하루 종일 비. 집에서 밀린 정리를 했다.");
-  mk(4, "🙂", "☀️", "친구랑 전시 보러 다녀옴. 기록 습관을 만들기로 함.");
-  mk(6, "😔", "☁️", "일이 잘 안 풀린 하루. 일찍 자자.");
+  mk(0, "😄", "☀️", "폴드8 개통! 펼쳤을 때 화면이 생각보다 훨씬 넓다. 노트 앱 만들 생각에 설렌다.", ["🎮", "🍽️"]);
+  mk(1, "🙂", "⛅", "오랜만에 한강 산책. 저녁엔 가족들과 삼계탕.", ["🏃", "👥"]);
+  mk(2, "😐", "🌧️", "하루 종일 비. 집에서 밀린 정리를 했다.", ["🛋️"]);
+  mk(4, "🙂", "☀️", "친구랑 전시 보러 다녀옴. 기록 습관을 만들기로 함.", ["👥", "🍽️"]);
+  mk(6, "😔", "☁️", "일이 잘 안 풀린 하루. 일찍 자자.", ["💼"]);
+  const pm = new Date(base.getFullYear(), base.getMonth() - 1, base.getDate());
+  const pmk = ymd(pm);
+  db.diary[pmk] = { date: pmk, mood: "🙂", weather: "☀️", acts: ["✈️"], body: "폴드8 언팩을 기다리며 여행 계획을 세웠다.", updatedAt: pm.getTime() };
   persist();
 }
 
@@ -861,6 +1196,8 @@ function buildPickers() {
   $("#mood-picker").innerHTML = MOODS.map(([e, l]) =>
     '<button class="pick-btn" data-v="' + e + '"><span class="pe">' + e + '</span><span class="pl">' + l + "</span></button>").join("");
   $("#weather-picker").innerHTML = WEATHER.map(([e, l]) =>
+    '<button class="pick-btn" data-v="' + e + '"><span class="pe">' + e + '</span><span class="pl">' + l + "</span></button>").join("");
+  $("#act-picker").innerHTML = ACTS.map(([e, l]) =>
     '<button class="pick-btn" data-v="' + e + '"><span class="pe">' + e + '</span><span class="pl">' + l + "</span></button>").join("");
 }
 function bind() {
@@ -901,8 +1238,48 @@ function bind() {
     const b = ev.target.closest("[data-v]");
     if (b) togglePickerValue("weather", b.dataset.v);
   });
+  $("#act-picker").addEventListener("click", (ev) => {
+    const b = ev.target.closest("[data-v]");
+    if (b) toggleAct(b.dataset.v);
+  });
+  $("#memory-slot").addEventListener("click", (ev) => {
+    const b = ev.target.closest("[data-date]");
+    if (b) selectDate(b.dataset.date);
+  });
+  $("#check-btn").addEventListener("click", cycleChecklist);
+  $("#note-body").addEventListener("click", onBodyClick);
   $("#diary-body").addEventListener("input", onDiaryInput);
   $("#del-diary").addEventListener("click", deleteDiary);
+  $("#trash-list").addEventListener("click", (ev) => {
+    const r = ev.target.closest("[data-restore]");
+    if (r) return restoreNote(r.dataset.restore);
+    const p = ev.target.closest("[data-purge]");
+    if (p) return purgeNote(p.dataset.purge);
+    if (ev.target.closest("#trash-empty")) emptyTrash();
+  });
+  $("#lock-btns").addEventListener("click", (ev) => {
+    const b = ev.target.closest("[data-lock-act]");
+    if (!b) return;
+    const act = b.dataset.lockAct;
+    if (act === "set") {
+      const p = askNewPin();
+      if (p) { db.settings.pinHash = hashPin(p); persist(); renderLockCard(); }
+    } else if (act === "change") {
+      if (!verifyCurrentPin()) return;
+      const p = askNewPin();
+      if (p) { db.settings.pinHash = hashPin(p); persist(); renderLockCard(); }
+    } else if (act === "off") {
+      if (!verifyCurrentPin()) return;
+      db.settings.pinHash = null;
+      persist();
+      renderLockCard();
+    }
+  });
+  $("#lock-open").addEventListener("click", tryUnlock);
+  $("#lock-input").addEventListener("keydown", (ev) => { if (ev.key === "Enter") tryUnlock(); });
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden && db.settings.pinHash) lockNow();
+  });
   $$("#theme-seg button").forEach((b) => b.addEventListener("click", () => {
     db.settings.theme = b.dataset.themeOpt;
     persist();
@@ -925,6 +1302,7 @@ setTab("notes");
 /* 펼침 화면에서는 최근 노트를 바로 보여준다 (커버 화면은 목록 먼저) */
 if (wideMq.matches && visibleNotes().length) ui.noteId = visibleNotes()[0].id;
 renderAll();
+if (db.settings.pinHash) lockNow();
 
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
   navigator.serviceWorker.register("./sw.js").catch(() => { /* 미지원 환경 */ });
