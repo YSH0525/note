@@ -20,3 +20,11 @@
 - 라이트/다크 테마, PIN 잠금, JSON 백업·복원, 오프라인 동작, 홈 화면 바로가기(새 노트·오늘 일기)
 
 실행: `app/index.html`을 브라우저로 열면 된다(서버 불필요). 주소 뒤에 `#demo`를 붙이면 샘플 데이터가 채워진다.
+
+### 배포
+
+`main` 브랜치에 푸시하면 GitHub Actions가 `app/` 디렉터리를 GitHub Pages로 자동 배포한다.
+
+- 배포 주소: **https://ysh0525.github.io/note/**
+- 폴드8 브라우저에서 이 주소를 열고 **"홈 화면에 추가"** 하면 일반 앱처럼 설치된다(오프라인·앱 바로가기 지원)
+- 최초 1회: Actions 실행이 Pages 설정 문제로 실패하면 저장소 **Settings → Pages → Source를 "GitHub Actions"** 로 지정 후 재실행
