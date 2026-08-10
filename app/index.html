@@ -21,6 +21,7 @@
   --sun: #C4524A;
   --sat: #4A6BC4;
   --shadow: 0 1px 3px rgba(35, 28, 60, .08);
+  --hinge: rgba(35, 28, 60, .35);
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -37,6 +38,7 @@
     --sun: #E88A82;
     --sat: #8CA3E8;
     --shadow: 0 1px 4px rgba(0, 0, 0, .4);
+    --hinge: rgba(0, 0, 0, .6);
   }
 }
 :root[data-theme="dark"] {
@@ -53,6 +55,7 @@
   --sun: #E88A82;
   --sat: #8CA3E8;
   --shadow: 0 1px 4px rgba(0, 0, 0, .4);
+  --hinge: rgba(0, 0, 0, .6);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -112,7 +115,7 @@ button { background: none; border: 0; cursor: pointer; }
 .logo::before {
   content: "";
   position: absolute;
-  top: 7px; bottom: 7px; left: 50%;
+  top: 18%; bottom: 18%; left: 50%;
   width: 1.5px;
   background: var(--accent-ink);
   opacity: .85;
@@ -120,7 +123,7 @@ button { background: none; border: 0; cursor: pointer; }
 .logo::after {
   content: "";
   position: absolute;
-  top: 10px; bottom: 10px; left: 22%; right: 22%;
+  top: 26%; bottom: 26%; left: 22%; right: 22%;
   border: 1.5px solid var(--accent-ink);
   border-radius: 4px;
   opacity: .85;
@@ -401,30 +404,36 @@ button { background: none; border: 0; cursor: pointer; }
 
 /* ---------- 메인 화면: 펼침면 레이아웃 ---------- */
 @media (min-width: 700px) {
-  .app { flex-direction: row; }
   .tabbar { display: none; }
+  /* 내비게이션을 상단 바로 옮겨, 아래 두 쪽이 화면 정중앙에서 갈라지게 한다 */
   .rail {
     display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 6px;
-    width: 86px;
-    padding: 16px 8px;
-    border-right: 1px solid var(--line);
+    align-items: center;
+    gap: 4px;
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--line);
     background: var(--bg);
   }
-  .rail .logo { margin-bottom: 14px; }
-  .rail .nav-btn { flex: none; border-radius: 12px; padding: 10px 0 8px; }
-  .rail .nav-btn.active { background: var(--accent-soft); }
-  .content { height: 100%; }
-  .view { display: grid; grid-template-columns: minmax(300px, 380px) 1fr; }
+  .rail .logo { width: 30px; height: 30px; border-radius: 9px; margin-right: 10px; }
+  .rail .brand { font-size: 15px; font-weight: 700; letter-spacing: -.01em; }
+  .rail .nav-btn {
+    flex: none;
+    flex-direction: row;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 99px;
+    font-size: 13px;
+  }
+  .rail .nav-btn svg { width: 18px; height: 18px; }
+  .rail .nav-btn.active { background: var(--accent-soft); color: var(--accent); }
+  /* 실제 힌지 위치(화면 정중앙)와 겹치는 50:50 펼침면 */
+  .view { display: grid; grid-template-columns: 1fr 1fr; }
   .view.single { display: flex; justify-content: center; background: var(--paper2); }
   .view.single .pane { max-width: 720px; width: 100%; background: transparent; }
-  .list-pane { border-right: 0; }
-  /* 힌지: 펼침면 가운데 접힘선 */
+  .list-pane { box-shadow: inset -16px 0 18px -14px var(--hinge); }
   .detail-pane {
     border-left: 1px solid var(--line);
-    box-shadow: inset 10px 0 14px -12px rgba(35, 28, 60, .35);
+    box-shadow: inset 16px 0 18px -14px var(--hinge);
   }
   .back { display: none; }
 }
@@ -434,6 +443,8 @@ button { background: none; border: 0; cursor: pointer; }
 <div class="app" id="app" data-pane="list">
   <nav class="rail" aria-label="주 메뉴">
     <div class="logo" role="img" aria-label="폴드노트"></div>
+    <span class="brand">폴드노트</span>
+    <span class="spacer"></span>
     <button class="nav-btn" data-tab="notes">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="4.5" y="3.5" width="15" height="17" rx="2.5"></rect><path d="M8.5 8.5h7M8.5 12h7M8.5 15.5h4"></path></svg>
       <span>노트</span>
