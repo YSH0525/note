@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 72" role="img" aria-label="Yoonque Labs">
+  <title>Yoonque Labs</title>
+  <rect x="4" y="10" width="52" height="52" rx="13" fill="#6C56C9"/>
+  <g fill="none" stroke="#FFFFFF" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M18.4 24.2C23.2 31.1 27.7 36.3 32.7 40.4"/>
+    <path d="M46.6 24.2 32.7 40.4"/>
+    <path d="M32.7 40.4 32.7 53.9"/>
+  </g>
+  <text x="70" y="43" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
+        font-size="25" font-weight="700" letter-spacing="-0.4" fill="#221F2A">Yoonque Labs</text>
+  <text x="70" y="58" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
+        font-size="10" font-weight="500" letter-spacing="2.4" fill="#6B6578">FOLDABLE FIRST</text>
+</svg>

@@ -1,7 +1,7 @@
 {
   "name": "폴드노트",
   "short_name": "폴드노트",
-  "description": "갤럭시 Z 폴드8에 맞춘 노트·다이어리 앱",
+  "description": "갤럭시 Z 폴드8에 맞춘 노트·다이어리 앱 — Yoonque Labs",
   "lang": "ko",
   "start_url": "./index.html",
   "scope": "./",
@@ -9,18 +9,35 @@
   "background_color": "#F3F1F8",
   "theme_color": "#6C56C9",
   "icons": [
-    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
   ],
   "shortcuts": [
     {
       "name": "새 노트",
       "url": "./index.html#new",
-      "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+      "icons": [
+        {
+          "src": "icon.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ]
     },
     {
       "name": "오늘 일기",
       "url": "./index.html#today",
-      "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+      "icons": [
+        {
+          "src": "icon.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ]
     }
   ]
 }

@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="author" content="Yoonque Labs">
+<meta name="description" content="갤럭시 Z 폴드8에 맞춘 노트·다이어리 앱. 만든 곳: Yoonque Labs">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg">
 <title>폴드노트</title>
@@ -577,6 +579,41 @@ button { background: none; border: 0; cursor: pointer; }
 .btn.danger { color: var(--danger); }
 .btn.danger:hover { border-color: var(--danger); }
 
+/* ---------- 개발사 표기 ---------- */
+.maker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.maker-mark {
+  flex: none;
+  width: 30px; height: 30px;
+  border-radius: 9px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.maker-mark svg { width: 19px; height: 19px; }
+.maker-text { font-size: 13px; line-height: 1.6; }
+.maker-sub { color: var(--ink2); font-size: 11.5px; letter-spacing: .01em; }
+.lock-maker {
+  position: absolute;
+  bottom: calc(24px + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink2);
+  font-size: 11.5px;
+  letter-spacing: .08em;
+  opacity: .8;
+}
+.lock-maker svg { width: 13px; height: 13px; }
+
 /* ---------- 커버 화면 (한 장 레이아웃) ---------- */
 @media (max-width: 699px) {
   .view .pane { width: 100%; flex: none; }
@@ -588,16 +625,28 @@ button { background: none; border: 0; cursor: pointer; }
 /* ---------- 메인 화면: 펼침면 레이아웃 ---------- */
 @media (min-width: 700px) {
   .tabbar { display: none; }
-  /* 내비게이션을 상단 바로 옮겨, 아래 두 쪽이 화면 정중앙에서 갈라지게 한다 */
+  /* 내비게이션도 상단에서 반으로 나눠, 접힘선이 화면 맨 위부터 이어지게 한다 */
   .rail {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 0;
+    border-bottom: 1px solid var(--line);
+    background: var(--bg);
+  }
+  .rail-half {
     display: flex;
     align-items: center;
     gap: 4px;
     padding: 8px 14px;
-    border-bottom: 1px solid var(--line);
-    background: var(--bg);
+    min-width: 0;
   }
-  .rail .logo { width: 30px; height: 30px; border-radius: 9px; margin-right: 10px; }
+  .rail-left { box-shadow: inset -16px 0 18px -14px var(--hinge); }
+  .rail-right {
+    justify-content: flex-end;
+    border-left: 1px solid var(--line);
+    box-shadow: inset 16px 0 18px -14px var(--hinge);
+  }
+  .rail .logo { width: 30px; height: 30px; border-radius: 9px; margin: 0 10px 0 0; }
   .rail .brand { font-size: 15px; font-weight: 700; letter-spacing: -.01em; }
   .rail .nav-btn {
     flex: none;
@@ -612,7 +661,19 @@ button { background: none; border: 0; cursor: pointer; }
   /* 실제 힌지 위치(화면 정중앙)와 겹치는 50:50 펼침면 */
   .view { display: grid; grid-template-columns: 1fr 1fr; }
   .view.single { display: flex; justify-content: center; background: var(--paper2); }
-  .view.single .pane { max-width: 720px; width: 100%; background: transparent; }
+  .view.single .pane { max-width: 720px; width: 100%; background: transparent; position: relative; }
+  /* 설정도 두 쪽으로 펼쳐, 접힘선이 화면 끝까지 이어지게 한다 */
+  .view.single .pane::before {
+    content: "";
+    position: absolute;
+    top: 0; bottom: 0; left: 50%;
+    width: 1px;
+    background: var(--line);
+    box-shadow: -16px 0 18px -14px var(--hinge), 16px 0 18px -14px var(--hinge);
+    pointer-events: none;
+  }
+  .settings { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 46px; align-content: start; align-items: start; }
+  .settings .card { position: relative; z-index: 1; }
   .list-pane { box-shadow: inset -16px 0 18px -14px var(--hinge); }
   .detail-pane {
     border-left: 1px solid var(--line);
@@ -625,9 +686,11 @@ button { background: none; border: 0; cursor: pointer; }
 <body>
 <div class="app" id="app" data-pane="list">
   <nav class="rail" aria-label="주 메뉴">
-    <div class="logo" role="img" aria-label="폴드노트"></div>
-    <span class="brand">폴드노트</span>
-    <span class="spacer"></span>
+    <div class="rail-half rail-left">
+      <div class="logo" role="img" aria-label="폴드노트"></div>
+      <span class="brand">폴드노트</span>
+    </div>
+    <div class="rail-half rail-right">
     <button class="nav-btn" data-tab="notes">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="4.5" y="3.5" width="15" height="17" rx="2.5"></rect><path d="M8.5 8.5h7M8.5 12h7M8.5 15.5h4"></path></svg>
       <span>노트</span>
@@ -640,6 +703,7 @@ button { background: none; border: 0; cursor: pointer; }
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7.5h16M4 12h16M4 16.5h16"></path><circle cx="9" cy="7.5" r="2" fill="var(--paper)"></circle><circle cx="15" cy="12" r="2" fill="var(--paper)"></circle><circle cx="7.5" cy="16.5" r="2" fill="var(--paper)"></circle></svg>
       <span>설정</span>
     </button>
+    </div>
   </nav>
 
   <main class="content">
@@ -758,8 +822,14 @@ button { background: none; border: 0; cursor: pointer; }
             <div id="trash-list"></div>
           </div>
           <div class="card">
-            <h2>폴드노트</h2>
-            <p class="hint">갤럭시 Z 폴드8에 맞춘 노트·다이어리 앱.<br>커버 화면에서는 한 장씩, 펼치면 수첩 펼침면처럼 두 쪽으로 보여요.<br>모든 데이터는 이 기기(브라우저)에만 저장됩니다.</p>
+            <h2>앱 정보</h2>
+            <p class="hint">폴드노트 <span id="app-version"></span> · 무료<br>갤럭시 Z 폴드8에 맞춘 노트·다이어리 앱.<br>커버 화면에서는 한 장씩, 펼치면 수첩 펼침면처럼 두 쪽으로 보여요.<br>모든 데이터는 이 기기에만 저장되고 어디로도 전송되지 않아요.</p>
+            <div class="maker">
+              <span class="maker-mark" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5.4 5.2C7.6 8.4 9.7 10.8 12 12.7"/><path d="M18.6 5.2 12 12.7"/><path d="M12 12.7 12 19.2"/></svg>
+              </span>
+              <span class="maker-text">만든 곳 <b>Yoonque Labs</b><br><span class="maker-sub">© 2026 Yoonque Labs</span></span>
+            </div>
           </div>
         </div>
       </div>
@@ -797,10 +867,15 @@ button { background: none; border: 0; cursor: pointer; }
   <input id="lock-input" type="password" inputmode="numeric" maxlength="8" autocomplete="off" aria-label="PIN 입력">
   <p class="err" id="lock-err"></p>
   <button class="btn-accent" id="lock-open">잠금 해제</button>
+  <p class="lock-maker">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.4 5.2C7.6 8.4 9.7 10.8 12 12.7"/><path d="M18.6 5.2 12 12.7"/><path d="M12 12.7 12 19.2"/></svg>
+    Yoonque Labs
+  </p>
 </div>
 
 <script>
 "use strict";
+const APP_VERSION = "2.4";
 const KEY = "foldnote.v1";
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
@@ -921,6 +996,15 @@ function setTab(t) {
   $("#view-settings").hidden = t !== "settings";
   $$(".nav-btn").forEach((b) => b.classList.toggle("active", b.dataset.tab === t));
   setPane("list");
+  /* 펼침 화면에서 노트 탭을 열면 최근 노트를 오른쪽 쪽에 바로 펼쳐 둔다 */
+  if (t === "notes" && wideMq.matches && !noteById(ui.noteId)) {
+    const list = visibleNotes();
+    if (list.length) {
+      ui.noteId = list[0].id;
+      renderNoteList();
+      renderEditor();
+    }
+  }
   if (t === "settings") renderSettings();
 }
 
@@ -1429,6 +1513,7 @@ function applyTheme() {
 const wideMq = matchMedia("(min-width: 700px)");
 function renderSettings() {
   applyTheme();
+  $("#app-version").textContent = "v" + APP_VERSION;
   const dn = Object.keys(db.diary).length;
   $("#data-stats").textContent = "노트 " + db.notes.length + "개 · 다이어리 " + dn + "일 기록 · 휴지통 " + db.trash.length + "개";
   $("#layout-indicator").textContent = wideMq.matches
@@ -1742,14 +1827,13 @@ function bind() {
   buildPickers();
   bind();
   updatePosture();
-  if (location.hash.includes("today")) {
+  /* 앱을 열면 오늘의 다이어리부터 보여준다 (#new 바로가기만 노트로 시작) */
+  if (location.hash.includes("new")) {
+    setTab("notes");
+  } else {
     ui.diaryDate = ymd(new Date());
     ui.month = startOfMonth(new Date());
     setTab("diary");
-  } else {
-    setTab("notes");
-    /* 펼침 화면에서는 최근 노트를 바로 보여준다 (커버 화면은 목록 먼저) */
-    if (wideMq.matches && visibleNotes().length) ui.noteId = visibleNotes()[0].id;
   }
   renderAll();
   if (location.hash.includes("new")) newNote();
