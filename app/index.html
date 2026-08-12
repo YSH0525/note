@@ -588,16 +588,28 @@ button { background: none; border: 0; cursor: pointer; }
 /* ---------- 메인 화면: 펼침면 레이아웃 ---------- */
 @media (min-width: 700px) {
   .tabbar { display: none; }
-  /* 내비게이션을 상단 바로 옮겨, 아래 두 쪽이 화면 정중앙에서 갈라지게 한다 */
+  /* 내비게이션도 상단에서 반으로 나눠, 접힘선이 화면 맨 위부터 이어지게 한다 */
   .rail {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 0;
+    border-bottom: 1px solid var(--line);
+    background: var(--bg);
+  }
+  .rail-half {
     display: flex;
     align-items: center;
     gap: 4px;
     padding: 8px 14px;
-    border-bottom: 1px solid var(--line);
-    background: var(--bg);
+    min-width: 0;
   }
-  .rail .logo { width: 30px; height: 30px; border-radius: 9px; margin-right: 10px; }
+  .rail-left { box-shadow: inset -16px 0 18px -14px var(--hinge); }
+  .rail-right {
+    justify-content: flex-end;
+    border-left: 1px solid var(--line);
+    box-shadow: inset 16px 0 18px -14px var(--hinge);
+  }
+  .rail .logo { width: 30px; height: 30px; border-radius: 9px; margin: 0 10px 0 0; }
   .rail .brand { font-size: 15px; font-weight: 700; letter-spacing: -.01em; }
   .rail .nav-btn {
     flex: none;
@@ -612,7 +624,19 @@ button { background: none; border: 0; cursor: pointer; }
   /* 실제 힌지 위치(화면 정중앙)와 겹치는 50:50 펼침면 */
   .view { display: grid; grid-template-columns: 1fr 1fr; }
   .view.single { display: flex; justify-content: center; background: var(--paper2); }
-  .view.single .pane { max-width: 720px; width: 100%; background: transparent; }
+  .view.single .pane { max-width: 720px; width: 100%; background: transparent; position: relative; }
+  /* 설정도 두 쪽으로 펼쳐, 접힘선이 화면 끝까지 이어지게 한다 */
+  .view.single .pane::before {
+    content: "";
+    position: absolute;
+    top: 0; bottom: 0; left: 50%;
+    width: 1px;
+    background: var(--line);
+    box-shadow: -16px 0 18px -14px var(--hinge), 16px 0 18px -14px var(--hinge);
+    pointer-events: none;
+  }
+  .settings { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 46px; align-content: start; align-items: start; }
+  .settings .card { position: relative; z-index: 1; }
   .list-pane { box-shadow: inset -16px 0 18px -14px var(--hinge); }
   .detail-pane {
     border-left: 1px solid var(--line);
@@ -625,9 +649,11 @@ button { background: none; border: 0; cursor: pointer; }
 <body>
 <div class="app" id="app" data-pane="list">
   <nav class="rail" aria-label="주 메뉴">
-    <div class="logo" role="img" aria-label="폴드노트"></div>
-    <span class="brand">폴드노트</span>
-    <span class="spacer"></span>
+    <div class="rail-half rail-left">
+      <div class="logo" role="img" aria-label="폴드노트"></div>
+      <span class="brand">폴드노트</span>
+    </div>
+    <div class="rail-half rail-right">
     <button class="nav-btn" data-tab="notes">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="4.5" y="3.5" width="15" height="17" rx="2.5"></rect><path d="M8.5 8.5h7M8.5 12h7M8.5 15.5h4"></path></svg>
       <span>노트</span>
@@ -640,6 +666,7 @@ button { background: none; border: 0; cursor: pointer; }
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7.5h16M4 12h16M4 16.5h16"></path><circle cx="9" cy="7.5" r="2" fill="var(--paper)"></circle><circle cx="15" cy="12" r="2" fill="var(--paper)"></circle><circle cx="7.5" cy="16.5" r="2" fill="var(--paper)"></circle></svg>
       <span>설정</span>
     </button>
+    </div>
   </nav>
 
   <main class="content">
