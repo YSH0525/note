@@ -588,7 +588,7 @@ button { background: none; border: 0; cursor: pointer; }
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 36px 26px calc(20px + env(safe-area-inset-bottom));
+  padding: 24px 26px calc(16px + env(safe-area-inset-bottom));
   overflow-y: auto;
 }
 /* 접힌 노트의 책등 — 펼쳤을 때의 가운데 접힘선과 짝을 이룬다 */
@@ -606,9 +606,9 @@ button { background: none; border: 0; cursor: pointer; }
   background: linear-gradient(to right, var(--hinge), transparent);
 }
 .cover-body { display: flex; flex-direction: column; align-items: center; width: 100%; }
-.cover .logo { width: 62px; height: 62px; border-radius: 18px; margin: 22px 0 0; }
-.cover-title { font-size: 25px; font-weight: 800; letter-spacing: -.02em; margin-top: 16px; }
-.cover-date { font-size: 15px; color: var(--ink2); margin-top: 6px; }
+.cover .logo { width: 48px; height: 48px; border-radius: 15px; margin: 4px 0 0; }
+.cover-title { font-size: 23px; font-weight: 800; letter-spacing: -.02em; margin-top: 12px; }
+.cover-date { font-size: 14px; color: var(--ink2); margin-top: 5px; }
 .cover-streak {
   font-size: 12.5px;
   font-weight: 700;
@@ -616,22 +616,94 @@ button { background: none; border: 0; cursor: pointer; }
   background: var(--accent-soft);
   padding: 5px 13px;
   border-radius: 99px;
-  margin-top: 12px;
+  margin-top: 10px;
 }
-.cover-quick { width: 100%; margin-top: 26px; }
+.cover-quick { width: 100%; margin-top: 18px; }
 .cover-quick h2 { font-size: 12px; font-weight: 500; color: var(--ink2); text-align: center; margin-bottom: 9px; }
 .cover-moods { display: flex; justify-content: center; gap: 6px; }
 .cover-moods button {
-  width: 46px; height: 46px;
-  border-radius: 13px;
+  width: 42px; height: 42px;
+  border-radius: 12px;
   background: var(--paper2);
   border: 1px solid var(--line);
-  font-size: 21px;
+  font-size: 20px;
   line-height: 1;
 }
 .cover-moods button.active { background: var(--accent-soft); border-color: var(--accent); }
 .cover-saved { text-align: center; font-size: 11.5px; color: var(--accent); margin-top: 9px; }
-.cover-foot { margin-top: auto; width: 100%; text-align: center; padding-top: 24px; }
+
+/* 한 줄 메모 */
+.cover-jot { display: flex; gap: 7px; width: 100%; margin-top: 14px; }
+.cover-jot input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--line);
+  background: var(--paper2);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 14px;
+}
+.cover-jot input::placeholder { color: var(--ink2); opacity: .8; }
+.cover-jot input:focus { outline: none; border-color: var(--accent); background: var(--paper); }
+.cover-jot button {
+  flex: none;
+  width: 46px;
+  border-radius: 12px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 19px;
+  font-weight: 600;
+}
+.cover-jot button:disabled { opacity: .4; }
+
+/* 오늘 일기 미리보기 */
+.cover-today {
+  display: block;
+  width: 100%;
+  text-align: left;
+  margin-top: 8px;
+  padding: 10px 13px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--paper2);
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--ink);
+}
+.cover-today:hover { border-color: var(--accent); }
+.cover-today .ct-head {
+  display: block;
+  font-size: 11px;
+  color: var(--ink2);
+  letter-spacing: .04em;
+  margin-bottom: 4px;
+}
+.cover-today .ct-body {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 작년 오늘 */
+.cover-memory {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  margin-top: 7px;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: 13px;
+  background: var(--accent-soft);
+  font-size: 12.5px;
+}
+.cover-memory:hover { border-color: var(--accent); }
+.cover-memory .cm-when { flex: none; color: var(--accent); font-weight: 700; }
+.cover-memory .cm-body { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); }
+
+.cover-foot { margin-top: auto; width: 100%; text-align: center; padding-top: 12px; }
 .cover-hint {
   display: flex;
   align-items: center;
@@ -639,9 +711,9 @@ button { background: none; border: 0; cursor: pointer; }
   gap: 8px;
   background: var(--accent-soft);
   border-radius: 14px;
-  padding: 13px;
-  font-size: 13.5px;
-  line-height: 1.5;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.45;
 }
 .cover-hint b { color: var(--accent); }
 .cover-open {
@@ -664,7 +736,7 @@ button { background: none; border: 0; cursor: pointer; }
   font-size: 10.5px;
   color: var(--ink2);
   letter-spacing: .08em;
-  margin-top: 14px;
+  margin-top: 6px;
   opacity: .75;
 }
 .cover-maker svg { width: 12px; height: 12px; }
@@ -970,6 +1042,12 @@ button { background: none; border: 0; cursor: pointer; }
       <div class="cover-moods" id="cover-moods"></div>
       <p class="cover-saved" id="cover-saved" hidden>오늘 기록에 저장했어요</p>
     </div>
+    <form class="cover-jot" id="cover-jot">
+      <input id="cover-jot-input" placeholder="한 줄 남기기" autocomplete="off" aria-label="한 줄 메모">
+      <button type="submit" id="cover-jot-btn" aria-label="저장">＋</button>
+    </form>
+    <button class="cover-today" id="cover-today" hidden></button>
+    <button class="cover-memory" id="cover-memory" hidden></button>
   </div>
   <div class="cover-foot">
     <p class="cover-hint" id="cover-hint">📖 <span>펼치면 <b>수첩처럼 두 쪽</b>으로 넓게 볼 수 있어요</span></p>
@@ -995,7 +1073,7 @@ button { background: none; border: 0; cursor: pointer; }
 
 <script>
 "use strict";
-const APP_VERSION = "2.5";
+const APP_VERSION = "2.6";
 const KEY = "foldnote.v1";
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
@@ -1659,6 +1737,23 @@ function renderCover() {
   $("#cover-moods").innerHTML = MOODS.map(([m, l]) =>
     '<button data-m="' + m + '" title="' + l + '"' + (e && e.mood === m ? ' class="active"' : "") + ">" + m + "</button>").join("");
   $("#cover-quick-label").textContent = e && e.mood ? "오늘 기분을 기록했어요" : "오늘 기분은 어때요?";
+  /* 오늘 일기 미리보기 — 써둔 게 있을 때만 */
+  const body = (e && e.body || "").trim();
+  $("#cover-today").hidden = !body;
+  if (body) {
+    $("#cover-today").innerHTML =
+      '<span class="ct-head">오늘 일기 · 탭하면 이어쓰기</span><span class="ct-body">' + esc(body) + "</span>";
+  }
+  /* 작년 오늘 */
+  const mem = memoriesFor(today)[0];
+  $("#cover-memory").hidden = !mem;
+  if (mem) {
+    const snippet = (mem.e.body || "").split("\n")[0].slice(0, 30);
+    $("#cover-memory").dataset.date = mem.e.date;
+    $("#cover-memory").innerHTML =
+      '<span class="cm-when">🕰 ' + mem.label + '</span><span class="cm-body">' +
+      (mem.e.mood ? mem.e.mood + " " : "") + (esc(snippet) || "기록 보기") + "</span>";
+  }
   /* 펼칠 수 있는 기기라고 확인된 적이 있을 때만 '펼치면' 이라고 안내한다 */
   $("#cover-hint").innerHTML = db.settings.sawWide
     ? '📖 <span>펼치면 <b>수첩처럼 두 쪽</b>으로 넓게 볼 수 있어요</span>'
@@ -1673,6 +1768,31 @@ function hideCover() {
   coverDone = true;
   $("#cover").hidden = true;
 }
+/* 표지에서 오늘 일기로 바로 들어가기 */
+function coverGoToDate(date) {
+  hideCover();
+  selectDate(date);
+  setTab("diary");
+  if (!wideMq.matches) setPane("detail");
+  renderDiaryEditor();
+}
+/* 한 줄 메모 — 오늘 일기 끝에 시각과 함께 덧붙인다 */
+function coverJot(text) {
+  const t = text.trim();
+  if (!t) return;
+  const today = ymd(new Date());
+  const e = ensureEntry(today);
+  const d = new Date();
+  const stamp = pad(d.getHours()) + ":" + pad(d.getMinutes());
+  e.body = (e.body ? e.body.replace(/\s*$/, "") + "\n" : "") + stamp + " " + t;
+  e.updatedAt = Date.now();
+  persist();
+  renderCover();
+  $("#cover-saved").hidden = false;
+  $("#cover-saved").textContent = "오늘 일기에 남겼어요";
+  if (ui.diaryDate === today) renderDiaryEditor();
+  renderCalendar();
+}
 function coverSetMood(m) {
   const today = ymd(new Date());
   const e = ensureEntry(today);
@@ -1682,6 +1802,7 @@ function coverSetMood(m) {
   persist();
   renderCover();
   $("#cover-saved").hidden = !db.diary[today];
+  $("#cover-saved").textContent = "오늘 기록에 저장했어요";
   if (ui.diaryDate === today) renderDiaryEditor();
   renderCalendar();
 }
@@ -1967,6 +2088,18 @@ function bind() {
   $("#cover-moods").addEventListener("click", (ev) => {
     const b = ev.target.closest("[data-m]");
     if (b) coverSetMood(b.dataset.m);
+  });
+  $("#cover-jot").addEventListener("submit", (ev) => {
+    ev.preventDefault();
+    const input = $("#cover-jot-input");
+    coverJot(input.value);
+    input.value = "";
+    input.blur();
+  });
+  $("#cover-today").addEventListener("click", () => coverGoToDate(ymd(new Date())));
+  $("#cover-memory").addEventListener("click", (ev) => {
+    const d = ev.currentTarget.dataset.date;
+    if (d) coverGoToDate(d);
   });
   $("#cover-open").addEventListener("click", hideCover);
   $("#cover-toggle").addEventListener("click", () => {
