@@ -37,8 +37,9 @@ const CONFIG = {
     shortDescription: "펼치면 수첩이 되는 노트·다이어리. 접힘선이 화면 가운데 오는 폴더블 전용 설계.",
     fullDescriptionFile: "store/full-description.txt"
   },
+  // 주의: imageType `icon` 은 이 API에 핸들러가 없다("Could not find handler").
+  // 앱 아이콘은 플레이 콘솔에서만 설정한다.
   images: {
-    icon: ["store/icon-512.png"],
     featureGraphic: ["store/feature-graphic-1024x500.png"],
     phoneScreenshots: [
       "store/screenshots/phone-1-cover.png",
@@ -188,6 +189,8 @@ async function main() {
   });
   console.log(`트랙 배정: ${args.track} (${args.status})`);
 
+  const skipped = [];
+
   // 4) 스토어 정보·이미지 (--listing 일 때만)
   if (args.listing) {
     const full = await readFile(path.resolve(ROOT, CONFIG.listing.fullDescriptionFile), "utf8");
@@ -202,19 +205,26 @@ async function main() {
     console.log("스토어 정보 갱신");
 
     for (const [type, files] of (args.images ? Object.entries(CONFIG.images) : [])) {
-      // 기존 이미지를 지운 뒤 새로 올린다. icon·featureGraphic 처럼 슬롯이 하나뿐인
-      // 종류는 전체 삭제 엔드포인트가 없어 404가 나는데, 업로드가 덮어쓰므로 그냥 넘어간다.
+      // 기존 이미지를 지운 뒤 새로 올린다. 슬롯이 하나뿐인 종류는 전체 삭제
+      // 엔드포인트가 없어 404가 나는데, 업로드가 덮어쓰므로 그냥 넘어간다.
       const existing = await callSafe("GET", `${API}/applications/${pkg}/edits/${editId}/images/${CONFIG.language}/${type}`, {}, `${type} 목록 조회`);
-      const ids = (existing && existing.images || []).map((i) => i.id).filter(Boolean);
-      for (const id of ids) {
+      for (const id of ((existing && existing.images) || []).map((i) => i.id).filter(Boolean)) {
         await callSafe("DELETE", `${API}/applications/${pkg}/edits/${editId}/images/${CONFIG.language}/${type}/${id}`, {}, `${type} 기존 이미지 삭제`);
       }
-      for (const f of files) {
-        const img = await readFile(path.resolve(ROOT, f));
-        await call("POST", `${UPLOAD}/applications/${pkg}/edits/${editId}/images/${CONFIG.language}/${type}?uploadType=media`,
-          { body: img, contentType: "image/png" });
+      // 한 종류가 막혀도 릴리스 전체를 되돌리지 않는다. 실패는 모아서 끝에 보고한다.
+      let done = 0;
+      try {
+        for (const f of files) {
+          const img = await readFile(path.resolve(ROOT, f));
+          await call("POST", `${UPLOAD}/applications/${pkg}/edits/${editId}/images/${CONFIG.language}/${type}?uploadType=media`,
+            { body: img, contentType: "image/png" });
+          done++;
+        }
+        console.log(`이미지 ${type}: ${done}개`);
+      } catch (e) {
+        skipped.push({ type, done, total: files.length, reason: String(e.message).split("\n")[0] });
+        console.log(`이미지 ${type}: ${done}/${files.length} — 이후 실패, 계속 진행`);
       }
-      console.log(`이미지 ${type}: ${files.length}개`);
     }
   }
 
@@ -222,6 +232,10 @@ async function main() {
   await call("POST", `${API}/applications/${pkg}/edits/${editId}:commit`);
   console.log(args.dryRun ? "\n[dry-run] 실제 호출 없음. 호출 예정 목록:" : "\n커밋 완료 — 플레이 콘솔에서 확인하세요.");
   if (args.dryRun) calls.forEach((c) => console.log("  " + c));
+  if (skipped.length) {
+    console.log("\n올리지 못한 이미지가 있습니다. 콘솔에서 직접 넣어주세요.");
+    skipped.forEach((s) => console.log(`  - ${s.type}: ${s.done}/${s.total} (${s.reason})`));
+  }
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
