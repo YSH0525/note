@@ -37,9 +37,10 @@ const CONFIG = {
     shortDescription: "펼치면 수첩이 되는 노트·다이어리. 접힘선이 화면 가운데 오는 폴더블 전용 설계.",
     fullDescriptionFile: "store/full-description.txt"
   },
-  // 주의: imageType `icon` 은 이 API에 핸들러가 없다("Could not find handler").
-  // 앱 아이콘은 플레이 콘솔에서만 설정한다.
+  // 주의: 리소스 이름은 edits.images 지만 실제 URL 경로는 /listings/ 다.
+  // (androidpublisher v3 디스커버리 문서 확인 — /images/ 로 부르면 전부 404)
   images: {
+    icon: ["store/icon-512.png"],
     featureGraphic: ["store/feature-graphic-1024x500.png"],
     phoneScreenshots: [
       "store/screenshots/phone-1-cover.png",
@@ -117,6 +118,18 @@ async function getAccessToken(sa) {
 }
 
 /* ---------- API 헬퍼 ---------- */
+// 실패 메시지를 한 줄로. 구글은 본문 JSON 에 진짜 이유를 담아 보내는데
+// 첫 줄만 찍으면 "→ 404" 밖에 안 남아서 원인을 못 찾는다.
+function brief(e) {
+  const [head, ...rest] = String(e.message).split("\n");
+  const status = head.replace(/^\S+ \S*androidpublisher\.googleapis\.com\/\S*?v3/, "…");
+  try {
+    const err = JSON.parse(rest.join("\n")).error || {};
+    const detail = [err.status, err.message].filter(Boolean).join(" · ");
+    return detail ? `${status} — ${detail}` : status;
+  } catch { return status; }
+}
+
 function makeClient(token, { dryRun }) {
   const calls = [];
   async function call(method, url, { json, body, contentType } = {}) {
@@ -134,7 +147,7 @@ function makeClient(token, { dryRun }) {
   // 실패해도 진행해야 하는 호출(기존 이미지 정리 등)
   async function callSafe(method, url, opts, label) {
     try { return await call(method, url, opts); }
-    catch (e) { console.log(`  (건너뜀) ${label}: ${String(e.message).split("\n")[0]}`); return null; }
+    catch (e) { console.log(`  (건너뜀) ${label}: ${brief(e)}`); return null; }
   }
   return { call, callSafe, calls };
 }
@@ -205,32 +218,46 @@ async function main() {
     console.log("스토어 정보 갱신");
 
     for (const [type, files] of (args.images ? Object.entries(CONFIG.images) : [])) {
-      // 기존 이미지를 지운 뒤 새로 올린다. 슬롯이 하나뿐인 종류는 전체 삭제
-      // 엔드포인트가 없어 404가 나는데, 업로드가 덮어쓰므로 그냥 넘어간다.
-      const existing = await callSafe("GET", `${API}/applications/${pkg}/edits/${editId}/images/${CONFIG.language}/${type}`, {}, `${type} 목록 조회`);
-      for (const id of ((existing && existing.images) || []).map((i) => i.id).filter(Boolean)) {
-        await callSafe("DELETE", `${API}/applications/${pkg}/edits/${editId}/images/${CONFIG.language}/${type}/${id}`, {}, `${type} 기존 이미지 삭제`);
-      }
+      const slot = `applications/${pkg}/edits/${editId}/listings/${CONFIG.language}/${type}`;
+      // 기존 이미지를 먼저 비운다. 실패해도 업로드가 덮어쓰므로 그냥 넘어간다.
+      await callSafe("DELETE", `${API}/${slot}`, {}, `${type} 기존 이미지 삭제`);
       // 한 종류가 막혀도 릴리스 전체를 되돌리지 않는다. 실패는 모아서 끝에 보고한다.
       let done = 0;
       try {
         for (const f of files) {
           const img = await readFile(path.resolve(ROOT, f));
-          await call("POST", `${UPLOAD}/applications/${pkg}/edits/${editId}/images/${CONFIG.language}/${type}?uploadType=media`,
-            { body: img, contentType: "image/png" });
+          await call("POST", `${UPLOAD}/${slot}?uploadType=media`, { body: img, contentType: "image/png" });
           done++;
         }
         console.log(`이미지 ${type}: ${done}개`);
       } catch (e) {
-        skipped.push({ type, done, total: files.length, reason: String(e.message).split("\n")[0] });
-        console.log(`이미지 ${type}: ${done}/${files.length} — 이후 실패, 계속 진행`);
+        skipped.push({ type, done, total: files.length, reason: brief(e) });
+        console.log(`이미지 ${type}: ${done}/${files.length} — 실패, 계속 진행\n    ${brief(e)}`);
       }
     }
   }
 
-  // 5) 커밋
-  await call("POST", `${API}/applications/${pkg}/edits/${editId}:commit`);
+  // 5) 검증 후 커밋 — validate 는 통과하는데 commit 이 403 이면 권한 문제로 좁혀진다
+  const check = await callSafe("POST", `${API}/applications/${pkg}/edits/${editId}:validate`, {}, "사전 검증");
+  console.log(check ? "사전 검증 통과" : "사전 검증 건너뜀");
+
+  const commitUrl = `${API}/applications/${pkg}/edits/${editId}:commit`;
+  let heldForReview = false;
+  try {
+    await call("POST", commitUrl);
+  } catch (e) {
+    // 기본 동작은 심사 중인 변경을 취소하고 함께 제출하는 것이라, 심사 취소 권한이
+    // 없으면 403이 난다. 심사 제출을 빼고 한 번 더 시도해 원인을 좁힌다.
+    if (!/→ 403/.test(e.message)) throw e;
+    console.log(`커밋 거부됨: ${brief(e)}\n심사 제출 없이 재시도합니다 (changesNotSentForReview)`);
+    await call("POST", `${commitUrl}?changesNotSentForReview=true`);
+    heldForReview = true;
+  }
   console.log(args.dryRun ? "\n[dry-run] 실제 호출 없음. 호출 예정 목록:" : "\n커밋 완료 — 플레이 콘솔에서 확인하세요.");
+  if (heldForReview) {
+    console.log("주의: 변경은 저장됐지만 심사에 제출되지 않았습니다.");
+    console.log("      플레이 콘솔에서 '검토를 위해 변경사항 전송'을 눌러야 출시됩니다.");
+  }
   if (args.dryRun) calls.forEach((c) => console.log("  " + c));
   if (skipped.length) {
     console.log("\n올리지 못한 이미지가 있습니다. 콘솔에서 직접 넣어주세요.");
