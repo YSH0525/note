@@ -33,7 +33,9 @@ const CONFIG = {
   language: "ko-KR",
   aab: "release/FoldNote-1.0.aab",
   listing: {
-    title: "폴드노트 - 폴더블 노트·다이어리",
+    // 콘솔에 등록된 앱 이름과 맞춰둔다. 다르면 --listing 이 사용자가 정한
+    // 이름을 덮어쓴다 (플레이 조회 결과: "폴드8노트 - 폴더블 노트·다이어리").
+    title: "폴드8노트 - 폴더블 노트·다이어리",
     shortDescription: "펼치면 수첩이 되는 노트·다이어리. 접힘선이 화면 가운데 오는 폴더블 전용 설계.",
     fullDescriptionFile: "store/full-description.txt"
   },
