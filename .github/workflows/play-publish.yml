@@ -62,6 +62,7 @@ jobs:
           ONLY=""; FORCE_LISTING=""; FORCE_STATUS=""
           case "$REF" in
             refs/heads/publish/listing*)    BRANCH_TRACK="production"; ONLY="--listing-only" ;;
+            refs/heads/publish/text*)       BRANCH_TRACK="production"; ONLY="--listing-only --no-images" ;;
             refs/heads/publish/aab*)        BRANCH_TRACK="production"; FORCE_LISTING="false"; FORCE_STATUS="draft" ;;
             refs/heads/publish/production*) BRANCH_TRACK="production" ;;
             *) BRANCH_TRACK="internal" ;;
