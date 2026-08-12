@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 펼친 노트: 바깥 테두리 + 가운데 접힘선. 안전 영역(가운데 66%) 안에 들어오도록 그린다 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M36,36 h36 a4,4 0 0 1 4,4 v28 a4,4 0 0 1 -4,4 h-36 a4,4 0 0 1 -4,-4 v-28 a4,4 0 0 1 4,-4 z M36,41 a1,1 0 0 0 -1,1 v24 a1,1 0 0 0 1,1 h16 v-26 z M56,41 v26 h16 a1,1 0 0 0 1,-1 v-24 a1,1 0 0 0 -1,-1 z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M52.6,32 h2.8 v44 h-2.8 z" />
+</vector>
