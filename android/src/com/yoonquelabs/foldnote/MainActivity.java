@@ -1,4 +1,4 @@
-package com.foldnote.app;
+package com.yoonquelabs.foldnote;
 
 import android.app.Activity;
 import android.content.Intent;

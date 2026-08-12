@@ -992,6 +992,7 @@ button { background: none; border: 0; cursor: pointer; }
           <div class="card">
             <h2>앱 정보</h2>
             <p class="hint">폴드노트 <span id="app-version"></span> · 무료<br>갤럭시 Z 폴드8에 맞춘 노트·다이어리 앱.<br>커버 화면에서는 한 장씩, 펼치면 수첩 펼침면처럼 두 쪽으로 보여요.<br>모든 데이터는 이 기기에만 저장되고 어디로도 전송되지 않아요.</p>
+            <div class="btn-row"><a class="btn" id="privacy-link" href="privacy.html" target="_blank" rel="noopener">개인정보처리방침</a></div>
             <div class="maker">
               <span class="maker-mark" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5.4 5.2C7.6 8.4 9.7 10.8 12 12.7"/><path d="M18.6 5.2 12 12.7"/><path d="M12 12.7 12 19.2"/></svg>
@@ -1073,7 +1074,7 @@ button { background: none; border: 0; cursor: pointer; }
 
 <script>
 "use strict";
-const APP_VERSION = "2.6";
+const APP_VERSION = "1.0";
 const KEY = "foldnote.v1";
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
