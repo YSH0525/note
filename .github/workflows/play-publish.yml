@@ -63,6 +63,7 @@ jobs:
           case "$REF" in
             refs/heads/publish/listing*)    BRANCH_TRACK="production"; ONLY="--listing-only" ;;
             refs/heads/publish/text*)       BRANCH_TRACK="production"; ONLY="--listing-only --no-images" ;;
+            refs/heads/publish/show*)       BRANCH_TRACK="production"; ONLY="--show" ;;
             refs/heads/publish/aab*)        BRANCH_TRACK="production"; FORCE_LISTING="false"; FORCE_STATUS="draft" ;;
             refs/heads/publish/production*) BRANCH_TRACK="production" ;;
             *) BRANCH_TRACK="internal" ;;
@@ -88,6 +89,7 @@ jobs:
           exit 0
 
       - name: 사전 점검 (dry-run)
+        if: steps.cfg.outputs.only != '--show'
         run: |
           ls -la release/*.aab
           node tools/play-publish.mjs \
