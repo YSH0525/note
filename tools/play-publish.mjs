@@ -152,6 +152,36 @@ function makeClient(token, { dryRun }) {
   return { call, callSafe, calls };
 }
 
+/* ---------- 권한 진단 ---------- */
+// 커밋이 403일 때 원인이 "우리가 올린 내용"인지 "계정 권한"인지 가른다.
+// 아무것도 담기지 않은 새 편집 세션을 만들어 validate 만 해보고 지운다.
+// 빈 편집조차 403이면 앱 상태·업로드 내용과 무관한 순수 권한 문제다.
+async function probePermission({ call, callSafe, pkg }) {
+  console.error("\n권한 진단: 빈 편집 세션으로 다시 시험합니다");
+  let probeId;
+  try {
+    const probe = await call("POST", `${API}/applications/${pkg}/edits`);
+    probeId = probe.id;
+  } catch (e) {
+    console.error(`  편집 세션 생성부터 거부됨 — ${brief(e)}`);
+    console.error("  → 이 서비스 계정은 이 앱에 접근할 수 없습니다.");
+    return;
+  }
+  try {
+    await call("POST", `${API}/applications/${pkg}/edits/${probeId}:validate`);
+    console.error("  빈 편집은 validate 통과 — 권한이 아니라 올린 내용이 문제일 수 있습니다.");
+  } catch (e) {
+    console.error(`  빈 편집도 실패 — ${brief(e)}`);
+    if (/→ 403/.test(e.message)) {
+      console.error("  → 앱 콘텐츠 설문·스토어 정보·AAB 와 무관한 계정 권한 문제로 확정.");
+      console.error("    편집 생성은 되는데 validate/commit 이 막히므로,");
+      console.error("    버전 생성 권한은 있고 트랙 출시 권한이 없는 상태입니다.");
+    }
+  } finally {
+    await callSafe("DELETE", `${API}/applications/${pkg}/edits/${probeId}`, {}, "진단용 편집 세션 정리");
+  }
+}
+
 /* ---------- 출시 절차 ---------- */
 async function main() {
   const args = parseArgs(process.argv.slice(2));
@@ -251,6 +281,7 @@ async function main() {
     // 스크립트가 아니라 서비스 계정 권한 문제다.
     if (/→ 403/.test(e.message)) {
       console.error(`\n커밋 거부됨: ${brief(e)}`);
+      await probePermission({ call, callSafe, pkg });
       console.error("플레이 콘솔 → 사용자 및 권한 → 해당 서비스 계정 → 앱 권한 확인:");
       console.error("  · 프로덕션 릴리스 관리 (Release to production)");
       console.error("  · 테스트 트랙 릴리스 관리");
