@@ -71,6 +71,7 @@ function parseArgs(argv) {
     if (k === "--dry-run") a.dryRun = true;
     else if (k === "--listing") a.listing = true;
     else if (k === "--listing-only") { a.listing = true; a.listingOnly = true; }
+    else if (k === "--show") a.show = true;
     else if (k === "--no-images") a.images = false;
     else if (k === "--track") a.track = argv[++i];
     else if (k === "--status") a.status = argv[++i];
@@ -190,16 +191,58 @@ async function probePermission({ call, callSafe, pkg }) {
   }
 }
 
+/* ---------- 상태 조회 (읽기 전용) ---------- */
+// 우리 스크립트가 뭘 보냈는지가 아니라 플레이가 지금 뭘 갖고 있는지를 본다.
+// 편집 세션을 만들어 읽기만 하고 커밋 없이 지우므로 아무것도 바뀌지 않는다.
+async function showState({ call, callSafe, pkg }) {
+  const edit = await call("POST", `${API}/applications/${pkg}/edits`);
+  try {
+    const tracks = await callSafe("GET", `${API}/applications/${pkg}/edits/${edit.id}/tracks`, {}, "트랙 조회");
+    console.log("\n[트랙]");
+    for (const t of (tracks && tracks.tracks) || []) {
+      for (const r of t.releases || []) {
+        const codes = (r.versionCodes || []).join(", ") || "(없음)";
+        console.log(`  ${t.track}: versionCode ${codes} · ${r.status}${r.name ? ` · ${r.name}` : ""}`);
+      }
+      if (!(t.releases || []).length) console.log(`  ${t.track}: (릴리스 없음)`);
+    }
+
+    const bundles = await callSafe("GET", `${API}/applications/${pkg}/edits/${edit.id}/bundles`, {}, "번들 조회");
+    const list = (bundles && bundles.bundles) || [];
+    console.log(`\n[업로드된 번들] ${list.length}개`);
+    for (const b of list) console.log(`  versionCode ${b.versionCode} · sha256 ${String(b.sha256 || "").slice(0, 16)}…`);
+
+    const l = await callSafe("GET", `${API}/applications/${pkg}/edits/${edit.id}/listings/${CONFIG.language}`, {}, "등록정보 조회");
+    console.log(`\n[스토어 등록정보 ${CONFIG.language}]`);
+    if (!l) console.log("  (비어 있음 — 콘솔에서 입력 필요)");
+    else {
+      console.log(`  제목: ${l.title || "(없음)"}`);
+      console.log(`  간단한 설명: ${l.shortDescription ? l.shortDescription.slice(0, 40) + "…" : "(없음)"}`);
+      console.log(`  자세한 설명: ${l.fullDescription ? l.fullDescription.length + "자" : "(없음)"}`);
+    }
+
+    console.log("\n[이미지]");
+    for (const type of Object.keys(CONFIG.images)) {
+      const r = await callSafe("GET", `${API}/applications/${pkg}/edits/${edit.id}/listings/${CONFIG.language}/${type}`, {}, `${type} 조회`);
+      console.log(`  ${type}: ${r ? ((r.images || []).length + "개") : "조회 실패"}`);
+    }
+  } finally {
+    await callSafe("DELETE", `${API}/applications/${pkg}/edits/${edit.id}`, {}, "조회용 편집 세션 정리");
+  }
+}
+
 /* ---------- 출시 절차 ---------- */
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.help) {
-    console.log("사용법: node tools/play-publish.mjs [--track internal|alpha|beta|production] [--status completed|draft] [--notes <문구>] [--listing] [--listing-only] [--no-images] [--aab <경로>] [--key <경로>] [--dry-run]");
+    console.log("사용법: node tools/play-publish.mjs [--track internal|alpha|beta|production] [--status completed|draft] [--notes <문구>] [--listing] [--listing-only] [--no-images] [--show] [--aab <경로>] [--key <경로>] [--dry-run]");
     return;
   }
 
   let aab = null;
-  if (args.listingOnly) {
+  if (args.show) {
+    console.log("플레이 쪽 현재 상태를 읽습니다 (변경 없음)");
+  } else if (args.listingOnly) {
     console.log("스토어 정보만 갱신합니다 (AAB 업로드·트랙 배정 건너뜀)");
   } else {
     const aabPath = path.resolve(ROOT, args.aab || CONFIG.aab);
@@ -221,6 +264,8 @@ async function main() {
 
   const { call, callSafe, calls } = makeClient(token, { dryRun: args.dryRun });
   const pkg = CONFIG.packageName;
+
+  if (args.show) return showState({ call, callSafe, pkg });
 
   // 1) 편집 세션 시작
   const edit = await call("POST", `${API}/applications/${pkg}/edits`);
