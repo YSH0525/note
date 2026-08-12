@@ -1,0 +1,68 @@
+name: Publish to Google Play
+
+# 두 가지 방법으로 출시한다.
+#  1) 태그 푸시: v1.0 형태의 태그를 밀면 내부 테스트 트랙으로 올라간다
+#  2) 수동 실행: Actions 탭에서 트랙·상태를 골라 실행 (프로덕션 승격 등)
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      track:
+        description: "출시 트랙"
+        type: choice
+        options: [internal, alpha, beta, production]
+        default: internal
+      status:
+        description: "릴리스 상태"
+        type: choice
+        options: [completed, draft]
+        default: completed
+      listing:
+        description: "스토어 정보·이미지도 갱신"
+        type: boolean
+        default: false
+      notes:
+        description: "릴리스 노트"
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: play-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: play
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: 제출물 확인
+        run: |
+          ls -la release/*.aab
+          node tools/play-publish.mjs \
+            --track "${{ inputs.track || 'internal' }}" \
+            --status "${{ inputs.status || 'completed' }}" \
+            --dry-run
+
+      - name: 플레이 업로드
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          if [ -z "$PLAY_SERVICE_ACCOUNT_JSON" ]; then
+            echo "::error::PLAY_SERVICE_ACCOUNT_JSON 시크릿이 없습니다. store/출시-자동화.md 참고."
+            exit 1
+          fi
+          node tools/play-publish.mjs \
+            --track "${{ inputs.track || 'internal' }}" \
+            --status "${{ inputs.status || 'completed' }}" \
+            ${{ inputs.listing && '--listing' || '' }} \
+            --notes "${{ inputs.notes || format('{0} 릴리스', github.ref_name) }}"

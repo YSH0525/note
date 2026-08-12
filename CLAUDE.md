@@ -46,6 +46,26 @@ Gradle 없이 SDK 도구만 사용한다. `android/build.sh` 참고.
 - `build.sh`가 `cp ../app/*`로 에셋을 복사하므로 **`app/` 아래에 하위 디렉터리를 만들면 누락된다.**
   브랜드 자산을 저장소 루트 `brand/`에 둔 이유.
 
+## 출시 (플레이스토어)
+
+**출시 작업은 Claude가 맡는다.** 절차는 [store/출시-자동화.md](store/출시-자동화.md),
+등록 정보는 [store/스토어-등록-정보.md](store/스토어-등록-정보.md).
+
+- 업로드·트랙 배정·스토어 정보 갱신은 `tools/play-publish.mjs`(Google Play Developer API)로 자동화돼 있다.
+  `.github/workflows/play-publish.yml`이 **`v*` 태그 푸시**와 수동 실행에 반응한다.
+- 출시 요청을 받으면 순서대로 한다.
+  1. 버전 올리기 — `app/index.html`의 `APP_VERSION` + `AndroidManifest.xml`의 versionName/**versionCode(반드시 증가)**
+  2. AAB·APK 재빌드 → `release/`에 배치 (`mkdir -p release` 먼저)
+  3. 스크린샷 갱신이 필요하면 Playwright로 다시 촬영
+  4. 커밋 → PR → 머지
+  5. `git tag vX.Y && git push origin vX.Y` 로 내부 테스트 트랙 배포
+  6. 실기기 확인 후 프로덕션 승격은 워크플로 수동 실행
+- **Claude가 할 수 없는 것** (사용자만 가능, 최초 1회):
+  - 플레이 콘솔에서 앱 항목 생성 — API로 새 앱을 만들 수 없다
+  - 서비스 계정 키를 저장소 시크릿 `PLAY_SERVICE_ACCOUNT_JSON`에 등록
+  - 데이터 보안·콘텐츠 등급 설문 제출 (답변은 등록 정보 문서에 정리돼 있음)
+  - 워크플로 수동 실행(`workflow_dispatch`)은 Claude 토큰 권한 밖이라 태그 푸시로 대신한다
+
 ## 디자인 원칙
 
 - **접힘선은 화면 정중앙(50:50).** 상단 바·본문·설정 화면까지 관통해 끊기지 않게 한다.
