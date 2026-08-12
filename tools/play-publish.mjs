@@ -168,21 +168,24 @@ async function probePermission({ call, callSafe, pkg }) {
     console.error("  → 이 서비스 계정은 이 앱에 접근할 수 없습니다.");
     return;
   }
-  try {
-    await call("POST", `${API}/applications/${pkg}/edits/${probeId}:validate`);
-    // 빈 편집이 통과한다고 권한이 충분하다는 뜻은 아니다. 담긴 내용이 없으면
-    // 승인할 것도 없기 때문이다. 플레이는 편집에 담긴 내용별로 권한을 본다.
-    console.error("  빈 편집은 validate 통과 — 앱 접근 자체는 됩니다.");
-    console.error("  → 403은 편집에 담은 내용이 건드리는 권한 때문입니다.");
-    console.error("    --listing-only 로 트랙 배정을 빼고 돌려보면 범위가 갈립니다.");
-  } catch (e) {
-    console.error(`  빈 편집도 실패 — ${brief(e)}`);
-    if (/→ 403/.test(e.message)) {
-      console.error("  → 앱 콘텐츠 설문·스토어 정보·AAB 와 무관한 계정 권한 문제로 확정.");
-      console.error("    편집 생성은 되는데 validate/commit 이 막히므로,");
-      console.error("    버전 생성 권한은 있고 트랙 출시 권한이 없는 상태입니다.");
+  // validate 만으로는 부족하다. 커밋 자체가 내용과 무관하게 막히는 것인지
+  // 확인해야 "담긴 내용 때문"이라는 해석이 성립한다. 빈 편집 커밋은 무해하다.
+  let ok = true;
+  for (const op of ["validate", "commit"]) {
+    try {
+      await call("POST", `${API}/applications/${pkg}/edits/${probeId}:${op}`);
+      console.error(`  빈 편집 ${op}: 통과`);
+    } catch (e) {
+      ok = false;
+      console.error(`  빈 편집 ${op}: 실패 — ${brief(e)}`);
+      break;
     }
-  } finally {
+  }
+  if (ok) {
+    console.error("  → 빈 편집은 커밋까지 됩니다. 403은 편집에 담은 내용 때문입니다.");
+    console.error("    담은 것을 빼가며 좁힐 것: --listing-only(스토어만) / publish/aab(AAB·트랙만).");
+  } else {
+    console.error("  → 아무것도 담지 않아도 막힙니다. 담은 내용과 무관한 계정 권한 문제입니다.");
     await callSafe("DELETE", `${API}/applications/${pkg}/edits/${probeId}`, {}, "진단용 편집 세션 정리");
   }
 }
