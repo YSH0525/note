@@ -65,11 +65,12 @@ const CONFIG = {
 
 /* ---------- 인자 파싱 ---------- */
 function parseArgs(argv) {
-  const a = { track: "internal", status: "completed", dryRun: false, listing: false, images: true, notes: "", key: "", aab: "" };
+  const a = { track: "internal", status: "completed", dryRun: false, listing: false, listingOnly: false, images: true, notes: "", key: "", aab: "" };
   for (let i = 0; i < argv.length; i++) {
     const k = argv[i];
     if (k === "--dry-run") a.dryRun = true;
     else if (k === "--listing") a.listing = true;
+    else if (k === "--listing-only") { a.listing = true; a.listingOnly = true; }
     else if (k === "--no-images") a.images = false;
     else if (k === "--track") a.track = argv[++i];
     else if (k === "--status") a.status = argv[++i];
@@ -169,7 +170,11 @@ async function probePermission({ call, callSafe, pkg }) {
   }
   try {
     await call("POST", `${API}/applications/${pkg}/edits/${probeId}:validate`);
-    console.error("  빈 편집은 validate 통과 — 권한이 아니라 올린 내용이 문제일 수 있습니다.");
+    // 빈 편집이 통과한다고 권한이 충분하다는 뜻은 아니다. 담긴 내용이 없으면
+    // 승인할 것도 없기 때문이다. 플레이는 편집에 담긴 내용별로 권한을 본다.
+    console.error("  빈 편집은 validate 통과 — 앱 접근 자체는 됩니다.");
+    console.error("  → 403은 편집에 담은 내용이 건드리는 권한 때문입니다.");
+    console.error("    --listing-only 로 트랙 배정을 빼고 돌려보면 범위가 갈립니다.");
   } catch (e) {
     console.error(`  빈 편집도 실패 — ${brief(e)}`);
     if (/→ 403/.test(e.message)) {
@@ -186,13 +191,18 @@ async function probePermission({ call, callSafe, pkg }) {
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.help) {
-    console.log("사용법: node tools/play-publish.mjs [--track internal|alpha|beta|production] [--status completed|draft] [--notes <문구>] [--listing] [--no-images] [--aab <경로>] [--key <경로>] [--dry-run]");
+    console.log("사용법: node tools/play-publish.mjs [--track internal|alpha|beta|production] [--status completed|draft] [--notes <문구>] [--listing] [--listing-only] [--no-images] [--aab <경로>] [--key <경로>] [--dry-run]");
     return;
   }
 
-  const aabPath = path.resolve(ROOT, args.aab || CONFIG.aab);
-  const aab = await readFile(aabPath);
-  console.log(`AAB: ${path.relative(ROOT, aabPath)} (${(aab.length / 1024).toFixed(0)} KB)`);
+  let aab = null;
+  if (args.listingOnly) {
+    console.log("스토어 정보만 갱신합니다 (AAB 업로드·트랙 배정 건너뜀)");
+  } else {
+    const aabPath = path.resolve(ROOT, args.aab || CONFIG.aab);
+    aab = await readFile(aabPath);
+    console.log(`AAB: ${path.relative(ROOT, aabPath)} (${(aab.length / 1024).toFixed(0)} KB)`);
+  }
 
   let token = "DRY-RUN";
   if (!args.dryRun) {
@@ -214,23 +224,25 @@ async function main() {
   const editId = edit.id || "DRY-EDIT";
   console.log(`편집 세션: ${editId}`);
 
-  // 2) AAB 업로드
-  const bundle = await call("POST", `${UPLOAD}/applications/${pkg}/edits/${editId}/bundles?uploadType=media`, { body: aab });
-  const versionCode = bundle.versionCode || "(dry-run)";
-  console.log(`업로드 완료: versionCode ${versionCode}`);
+  // 2~3) AAB 업로드 + 트랙 배정. --listing-only 면 둘 다 건너뛴다.
+  // 커밋 403의 원인이 '트랙 출시'인지 '스토어 등록정보'인지 가르는 데 쓴다.
+  if (!args.listingOnly) {
+    const bundle = await call("POST", `${UPLOAD}/applications/${pkg}/edits/${editId}/bundles?uploadType=media`, { body: aab });
+    const versionCode = bundle.versionCode || "(dry-run)";
+    console.log(`업로드 완료: versionCode ${versionCode}`);
 
-  // 3) 트랙에 배정
-  await call("PUT", `${API}/applications/${pkg}/edits/${editId}/tracks/${args.track}`, {
-    json: {
-      track: args.track,
-      releases: [{
-        versionCodes: [String(versionCode)],
-        status: args.status,
-        ...(args.notes ? { releaseNotes: [{ language: CONFIG.language, text: args.notes }] } : {})
-      }]
-    }
-  });
-  console.log(`트랙 배정: ${args.track} (${args.status})`);
+    await call("PUT", `${API}/applications/${pkg}/edits/${editId}/tracks/${args.track}`, {
+      json: {
+        track: args.track,
+        releases: [{
+          versionCodes: [String(versionCode)],
+          status: args.status,
+          ...(args.notes ? { releaseNotes: [{ language: CONFIG.language, text: args.notes }] } : {})
+        }]
+      }
+    });
+    console.log(`트랙 배정: ${args.track} (${args.status})`);
+  }
 
   const skipped = [];
 

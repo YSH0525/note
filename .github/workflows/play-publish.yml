@@ -56,7 +56,11 @@ jobs:
           IN_NOTES: ${{ inputs.notes }}
           IN_LISTING: ${{ inputs.listing }}
         run: |
+          # publish/listing* 은 AAB·트랙을 건드리지 않고 스토어 정보만 올린다.
+          # 커밋 403의 원인이 '트랙 출시'인지 '스토어 등록정보'인지 가를 때 쓴다.
+          ONLY=""
           case "$REF" in
+            refs/heads/publish/listing*)   BRANCH_TRACK="production"; ONLY="--listing-only" ;;
             refs/heads/publish/production*) BRANCH_TRACK="production" ;;
             *) BRANCH_TRACK="internal" ;;
           esac
@@ -69,12 +73,15 @@ jobs:
             echo "status=$STATUS"
             echo "notes=$NOTES"
             echo "listing=$LISTING"
+            echo "only=$ONLY"
           } >> "$GITHUB_OUTPUT"
           {
             echo "### 출시 설정"
             echo "- 트랙 \`$TRACK\` · 상태 \`$STATUS\` · 스토어 정보 갱신 \`$LISTING\`"
             echo "- 릴리스 노트: $NOTES"
+            [ -n "$ONLY" ] && echo "- **스토어 정보만 갱신** (AAB·트랙 건너뜀)"
           } >> "$GITHUB_STEP_SUMMARY"
+          exit 0
 
       - name: 사전 점검 (dry-run)
         run: |
@@ -92,8 +99,8 @@ jobs:
             echo "::error::PLAY_SERVICE_ACCOUNT_JSON 시크릿이 없습니다. store/출시-자동화.md 참고."
             exit 1
           fi
-          EXTRA=""
-          if [ "${{ steps.cfg.outputs.listing }}" = "true" ]; then EXTRA="--listing"; fi
+          EXTRA="${{ steps.cfg.outputs.only }}"
+          if [ -z "$EXTRA" ] && [ "${{ steps.cfg.outputs.listing }}" = "true" ]; then EXTRA="--listing"; fi
           node tools/play-publish.mjs \
             --track "${{ steps.cfg.outputs.track }}" \
             --status "${{ steps.cfg.outputs.status }}" \
