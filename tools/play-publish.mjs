@@ -63,11 +63,12 @@ const CONFIG = {
 
 /* ---------- 인자 파싱 ---------- */
 function parseArgs(argv) {
-  const a = { track: "internal", status: "completed", dryRun: false, listing: false, notes: "", key: "", aab: "" };
+  const a = { track: "internal", status: "completed", dryRun: false, listing: false, images: true, notes: "", key: "", aab: "" };
   for (let i = 0; i < argv.length; i++) {
     const k = argv[i];
     if (k === "--dry-run") a.dryRun = true;
     else if (k === "--listing") a.listing = true;
+    else if (k === "--no-images") a.images = false;
     else if (k === "--track") a.track = argv[++i];
     else if (k === "--status") a.status = argv[++i];
     else if (k === "--notes") a.notes = argv[++i];
@@ -129,14 +130,19 @@ function makeClient(token, { dryRun }) {
     if (!res.ok) throw new Error(`${method} ${url} → ${res.status}\n${text}`);
     return text ? JSON.parse(text) : {};
   }
-  return { call, calls };
+  // 실패해도 진행해야 하는 호출(기존 이미지 정리 등)
+  async function callSafe(method, url, opts, label) {
+    try { return await call(method, url, opts); }
+    catch (e) { console.log(`  (건너뜀) ${label}: ${String(e.message).split("\n")[0]}`); return null; }
+  }
+  return { call, callSafe, calls };
 }
 
 /* ---------- 출시 절차 ---------- */
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.help) {
-    console.log("사용법: node tools/play-publish.mjs [--track internal|alpha|beta|production] [--status completed|draft] [--notes <문구>] [--listing] [--aab <경로>] [--key <경로>] [--dry-run]");
+    console.log("사용법: node tools/play-publish.mjs [--track internal|alpha|beta|production] [--status completed|draft] [--notes <문구>] [--listing] [--no-images] [--aab <경로>] [--key <경로>] [--dry-run]");
     return;
   }
 
@@ -156,7 +162,7 @@ async function main() {
     console.log(`인증 완료: ${sa.client_email}`);
   }
 
-  const { call, calls } = makeClient(token, { dryRun: args.dryRun });
+  const { call, callSafe, calls } = makeClient(token, { dryRun: args.dryRun });
   const pkg = CONFIG.packageName;
 
   // 1) 편집 세션 시작
@@ -195,8 +201,14 @@ async function main() {
     });
     console.log("스토어 정보 갱신");
 
-    for (const [type, files] of Object.entries(CONFIG.images)) {
-      await call("DELETE", `${API}/applications/${pkg}/edits/${editId}/images/${CONFIG.language}/${type}`);
+    for (const [type, files] of (args.images ? Object.entries(CONFIG.images) : [])) {
+      // 기존 이미지를 지운 뒤 새로 올린다. icon·featureGraphic 처럼 슬롯이 하나뿐인
+      // 종류는 전체 삭제 엔드포인트가 없어 404가 나는데, 업로드가 덮어쓰므로 그냥 넘어간다.
+      const existing = await callSafe("GET", `${API}/applications/${pkg}/edits/${editId}/images/${CONFIG.language}/${type}`, {}, `${type} 목록 조회`);
+      const ids = (existing && existing.images || []).map((i) => i.id).filter(Boolean);
+      for (const id of ids) {
+        await callSafe("DELETE", `${API}/applications/${pkg}/edits/${editId}/images/${CONFIG.language}/${type}/${id}`, {}, `${type} 기존 이미지 삭제`);
+      }
       for (const f of files) {
         const img = await readFile(path.resolve(ROOT, f));
         await call("POST", `${UPLOAD}/applications/${pkg}/edits/${editId}/images/${CONFIG.language}/${type}?uploadType=media`,
