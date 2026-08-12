@@ -58,13 +58,16 @@ Gradle 없이 SDK 도구만 사용한다. `android/build.sh` 참고.
   2. AAB·APK 재빌드 → `release/`에 배치 (`mkdir -p release` 먼저)
   3. 스크린샷 갱신이 필요하면 Playwright로 다시 촬영
   4. 커밋 → PR → 머지
-  5. `git tag vX.Y && git push origin vX.Y` 로 내부 테스트 트랙 배포
+  5. `git push origin main:publish/vX.Y` 로 내부 테스트 트랙 배포
+     (**태그 푸시(`git push origin vX.Y`)와 `workflow_dispatch`는 Claude 토큰에서 403이다.**
+     브랜치 푸시만 가능하므로 `publish/**` 트리거를 쓴다)
   6. 실기기 확인 후 프로덕션 승격은 워크플로 수동 실행
 - **Claude가 할 수 없는 것** (사용자만 가능, 최초 1회):
   - 플레이 콘솔에서 앱 항목 생성 — API로 새 앱을 만들 수 없다
   - 서비스 계정 키를 저장소 시크릿 `PLAY_SERVICE_ACCOUNT_JSON`에 등록
   - 데이터 보안·콘텐츠 등급 설문 제출 (답변은 등록 정보 문서에 정리돼 있음)
-  - 워크플로 수동 실행(`workflow_dispatch`)은 Claude 토큰 권한 밖이라 태그 푸시로 대신한다
+  - 워크플로 수동 실행(`workflow_dispatch`)과 태그 푸시는 Claude 토큰 권한 밖 → `publish/**` 브랜치 푸시로 대신한다
+  - 프로덕션 승격은 Actions 탭에서 수동 실행(트랙 production 선택)
 
 ## 디자인 원칙
 
