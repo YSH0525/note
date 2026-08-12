@@ -948,6 +948,15 @@ function setTab(t) {
   $("#view-settings").hidden = t !== "settings";
   $$(".nav-btn").forEach((b) => b.classList.toggle("active", b.dataset.tab === t));
   setPane("list");
+  /* 펼침 화면에서 노트 탭을 열면 최근 노트를 오른쪽 쪽에 바로 펼쳐 둔다 */
+  if (t === "notes" && wideMq.matches && !noteById(ui.noteId)) {
+    const list = visibleNotes();
+    if (list.length) {
+      ui.noteId = list[0].id;
+      renderNoteList();
+      renderEditor();
+    }
+  }
   if (t === "settings") renderSettings();
 }
 
@@ -1769,14 +1778,13 @@ function bind() {
   buildPickers();
   bind();
   updatePosture();
-  if (location.hash.includes("today")) {
+  /* 앱을 열면 오늘의 다이어리부터 보여준다 (#new 바로가기만 노트로 시작) */
+  if (location.hash.includes("new")) {
+    setTab("notes");
+  } else {
     ui.diaryDate = ymd(new Date());
     ui.month = startOfMonth(new Date());
     setTab("diary");
-  } else {
-    setTab("notes");
-    /* 펼침 화면에서는 최근 노트를 바로 보여준다 (커버 화면은 목록 먼저) */
-    if (wideMq.matches && visibleNotes().length) ui.noteId = visibleNotes()[0].id;
   }
   renderAll();
   if (location.hash.includes("new")) newNote();
