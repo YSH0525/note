@@ -241,23 +241,25 @@ async function main() {
   const check = await callSafe("POST", `${API}/applications/${pkg}/edits/${editId}:validate`, {}, "사전 검증");
   console.log(check ? "사전 검증 통과" : "사전 검증 건너뜀");
 
-  const commitUrl = `${API}/applications/${pkg}/edits/${editId}:commit`;
-  let heldForReview = false;
+  // changesNotSentForReview 로 심사 제출을 미루는 우회로는 이 앱에 쓸 수 없다.
+  // 아직 한 번도 출시된 적 없는 앱이라 변경이 항상 자동으로 심사에 올라간다
+  // ("Changes are sent for review automatically" 400 INVALID_ARGUMENT).
   try {
-    await call("POST", commitUrl);
+    await call("POST", `${API}/applications/${pkg}/edits/${editId}:commit`);
   } catch (e) {
-    // 기본 동작은 심사 중인 변경을 취소하고 함께 제출하는 것이라, 심사 취소 권한이
-    // 없으면 403이 난다. 심사 제출을 빼고 한 번 더 시도해 원인을 좁힌다.
-    if (!/→ 403/.test(e.message)) throw e;
-    console.log(`커밋 거부됨: ${brief(e)}\n심사 제출 없이 재시도합니다 (changesNotSentForReview)`);
-    await call("POST", `${commitUrl}?changesNotSentForReview=true`);
-    heldForReview = true;
+    // 업로드·트랙 배정·이미지까지 다 통과했는데 validate/commit 만 403이면
+    // 스크립트가 아니라 서비스 계정 권한 문제다.
+    if (/→ 403/.test(e.message)) {
+      console.error(`\n커밋 거부됨: ${brief(e)}`);
+      console.error("플레이 콘솔 → 사용자 및 권한 → 해당 서비스 계정 → 앱 권한 확인:");
+      console.error("  · 프로덕션 릴리스 관리 (Release to production)");
+      console.error("  · 테스트 트랙 릴리스 관리");
+      console.error("  · 스토어 등록정보 관리");
+      console.error("권한 변경은 반영에 최대 24시간까지 걸린다.");
+    }
+    throw e;
   }
   console.log(args.dryRun ? "\n[dry-run] 실제 호출 없음. 호출 예정 목록:" : "\n커밋 완료 — 플레이 콘솔에서 확인하세요.");
-  if (heldForReview) {
-    console.log("주의: 변경은 저장됐지만 심사에 제출되지 않았습니다.");
-    console.log("      플레이 콘솔에서 '검토를 위해 변경사항 전송'을 눌러야 출시됩니다.");
-  }
   if (args.dryRun) calls.forEach((c) => console.log("  " + c));
   if (skipped.length) {
     console.log("\n올리지 못한 이미지가 있습니다. 콘솔에서 직접 넣어주세요.");
