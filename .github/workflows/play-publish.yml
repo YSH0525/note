@@ -58,16 +58,20 @@ jobs:
         run: |
           # publish/listing* 은 AAB·트랙을 건드리지 않고 스토어 정보만 올린다.
           # 커밋 403의 원인이 '트랙 출시'인지 '스토어 등록정보'인지 가를 때 쓴다.
-          ONLY=""
+          # publish/listing* 은 AAB·트랙을 건드리지 않고 스토어 정보만,
+          # publish/aab*     은 반대로 AAB·트랙만 올린다. 커밋 403의 원인이
+          # 어느 쪽인지 가르려면 담는 내용을 한쪽씩 빼보는 수밖에 없다.
+          ONLY=""; FORCE_LISTING=""
           case "$REF" in
-            refs/heads/publish/listing*)   BRANCH_TRACK="production"; ONLY="--listing-only" ;;
+            refs/heads/publish/listing*)    BRANCH_TRACK="production"; ONLY="--listing-only" ;;
+            refs/heads/publish/aab*)        BRANCH_TRACK="production"; FORCE_LISTING="false" ;;
             refs/heads/publish/production*) BRANCH_TRACK="production" ;;
             *) BRANCH_TRACK="internal" ;;
           esac
           TRACK="${IN_TRACK:-$BRANCH_TRACK}"
           STATUS="${IN_STATUS:-completed}"
           NOTES="${IN_NOTES:-${GITHUB_REF_NAME} 릴리스}"
-          LISTING="${IN_LISTING:-true}"
+          LISTING="${FORCE_LISTING:-${IN_LISTING:-true}}"
           {
             echo "track=$TRACK"
             echo "status=$STATUS"
