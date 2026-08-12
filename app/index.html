@@ -579,6 +579,100 @@ button { background: none; border: 0; cursor: pointer; }
 .btn.danger { color: var(--danger); }
 .btn.danger:hover { border-color: var(--danger); }
 
+/* ---------- 커버 화면 표지 ---------- */
+.cover {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  background: var(--paper);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 36px 26px calc(20px + env(safe-area-inset-bottom));
+  overflow-y: auto;
+}
+/* 접힌 노트의 책등 — 펼쳤을 때의 가운데 접힘선과 짝을 이룬다 */
+.cover-spine {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 12px;
+  background: var(--accent);
+}
+.cover-spine::after {
+  content: "";
+  position: absolute;
+  left: 12px; top: 0; bottom: 0;
+  width: 10px;
+  background: linear-gradient(to right, var(--hinge), transparent);
+}
+.cover-body { display: flex; flex-direction: column; align-items: center; width: 100%; }
+.cover .logo { width: 62px; height: 62px; border-radius: 18px; margin: 22px 0 0; }
+.cover-title { font-size: 25px; font-weight: 800; letter-spacing: -.02em; margin-top: 16px; }
+.cover-date { font-size: 15px; color: var(--ink2); margin-top: 6px; }
+.cover-streak {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 5px 13px;
+  border-radius: 99px;
+  margin-top: 12px;
+}
+.cover-quick { width: 100%; margin-top: 26px; }
+.cover-quick h2 { font-size: 12px; font-weight: 500; color: var(--ink2); text-align: center; margin-bottom: 9px; }
+.cover-moods { display: flex; justify-content: center; gap: 6px; }
+.cover-moods button {
+  width: 46px; height: 46px;
+  border-radius: 13px;
+  background: var(--paper2);
+  border: 1px solid var(--line);
+  font-size: 21px;
+  line-height: 1;
+}
+.cover-moods button.active { background: var(--accent-soft); border-color: var(--accent); }
+.cover-saved { text-align: center; font-size: 11.5px; color: var(--accent); margin-top: 9px; }
+.cover-foot { margin-top: auto; width: 100%; text-align: center; padding-top: 24px; }
+.cover-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--accent-soft);
+  border-radius: 14px;
+  padding: 13px;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.cover-hint b { color: var(--accent); }
+.cover-open {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  background: var(--paper2);
+  border-radius: 13px;
+  padding: 12px;
+  font-size: 13.5px;
+  color: var(--ink2);
+}
+.cover-open:hover { border-color: var(--accent); color: var(--accent); }
+.cover-maker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 10.5px;
+  color: var(--ink2);
+  letter-spacing: .08em;
+  margin-top: 14px;
+  opacity: .75;
+}
+.cover-maker svg { width: 12px; height: 12px; }
+/* 펼치면 표지는 존재 자체가 사라진다 */
+@media (min-width: 700px) {
+  .cover { display: none !important; }
+}
+
 /* ---------- 개발사 표기 ---------- */
 .maker {
   display: flex;
@@ -800,6 +894,8 @@ button { background: none; border: 0; cursor: pointer; }
               <button data-theme-opt="dark">다크</button>
             </div>
             <p class="hint" id="layout-indicator"></p>
+            <p class="hint">접었을 때 앱을 열면 노트 표지가 먼저 나와요. 표지에서 오늘 기분을 바로 기록할 수 있어요.</p>
+            <div class="btn-row"><button class="btn" id="cover-toggle"></button></div>
           </div>
           <div class="card">
             <h2>데이터</h2>
@@ -861,6 +957,30 @@ button { background: none; border: 0; cursor: pointer; }
 </div>
 <input type="file" id="photo-input" accept="image/*" multiple hidden>
 
+<!-- 커버 화면(접었을 때) 표지 -->
+<div class="cover" id="cover" hidden>
+  <div class="cover-spine" aria-hidden="true"></div>
+  <div class="cover-body">
+    <div class="logo" role="img" aria-label="폴드노트"></div>
+    <h1 class="cover-title">폴드노트</h1>
+    <p class="cover-date" id="cover-date"></p>
+    <p class="cover-streak" id="cover-streak" hidden></p>
+    <div class="cover-quick">
+      <h2 id="cover-quick-label">오늘 기분은 어때요?</h2>
+      <div class="cover-moods" id="cover-moods"></div>
+      <p class="cover-saved" id="cover-saved" hidden>오늘 기록에 저장했어요</p>
+    </div>
+  </div>
+  <div class="cover-foot">
+    <p class="cover-hint" id="cover-hint">📖 <span>펼치면 <b>수첩처럼 두 쪽</b>으로 넓게 볼 수 있어요</span></p>
+    <button class="cover-open" id="cover-open">접은 채로 열기</button>
+    <p class="cover-maker">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.4 5.2C7.6 8.4 9.7 10.8 12 12.7"/><path d="M18.6 5.2 12 12.7"/><path d="M12 12.7 12 19.2"/></svg>
+      Yoonque Labs
+    </p>
+  </div>
+</div>
+
 <div class="lock" id="lock" hidden>
   <div class="logo" role="img" aria-label="폴드노트"></div>
   <p>PIN을 입력해 잠금을 해제하세요</p>
@@ -875,7 +995,7 @@ button { background: none; border: 0; cursor: pointer; }
 
 <script>
 "use strict";
-const APP_VERSION = "2.4";
+const APP_VERSION = "2.5";
 const KEY = "foldnote.v1";
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
@@ -1519,8 +1639,51 @@ function renderSettings() {
   $("#layout-indicator").textContent = wideMq.matches
     ? "지금은 펼침(메인 화면) 레이아웃 — 두 쪽 펼침면으로 보여요."
     : "지금은 커버 화면 레이아웃 — 한 장씩 보여요.";
+  $("#cover-toggle").textContent = db.settings.cover === false ? "표지 화면 켜기" : "표지 화면 끄기";
   renderLockCard();
   renderTrashList();
+}
+
+/* ---------- 커버 화면 표지 ---------- */
+let coverDone = false;
+function coverEligible() {
+  return !wideMq.matches && db.settings.cover !== false && !coverDone;
+}
+function renderCover() {
+  const today = ymd(new Date());
+  const e = db.diary[today];
+  $("#cover-date").textContent = fmtKDate(today);
+  const s = streakDays();
+  $("#cover-streak").hidden = s < 1;
+  $("#cover-streak").textContent = "연속 기록 " + s + "일 🔥";
+  $("#cover-moods").innerHTML = MOODS.map(([m, l]) =>
+    '<button data-m="' + m + '" title="' + l + '"' + (e && e.mood === m ? ' class="active"' : "") + ">" + m + "</button>").join("");
+  $("#cover-quick-label").textContent = e && e.mood ? "오늘 기분을 기록했어요" : "오늘 기분은 어때요?";
+  /* 펼칠 수 있는 기기라고 확인된 적이 있을 때만 '펼치면' 이라고 안내한다 */
+  $("#cover-hint").innerHTML = db.settings.sawWide
+    ? '📖 <span>펼치면 <b>수첩처럼 두 쪽</b>으로 넓게 볼 수 있어요</span>'
+    : '📖 <span>넓은 화면에서는 <b>두 쪽 펼침면</b>으로 볼 수 있어요</span>';
+}
+function showCover() {
+  renderCover();
+  $("#cover-saved").hidden = true;
+  $("#cover").hidden = false;
+}
+function hideCover() {
+  coverDone = true;
+  $("#cover").hidden = true;
+}
+function coverSetMood(m) {
+  const today = ymd(new Date());
+  const e = ensureEntry(today);
+  e.mood = e.mood === m ? null : m;
+  e.updatedAt = Date.now();
+  pruneEntry(today);
+  persist();
+  renderCover();
+  $("#cover-saved").hidden = !db.diary[today];
+  if (ui.diaryDate === today) renderDiaryEditor();
+  renderCalendar();
 }
 
 /* ---------- PIN 잠금 ---------- */
@@ -1801,6 +1964,16 @@ function bind() {
   } catch (e) { /* 미지원 브라우저 */ }
   window.addEventListener("resize", updatePosture);
   window.addEventListener("hashchange", updatePosture);
+  $("#cover-moods").addEventListener("click", (ev) => {
+    const b = ev.target.closest("[data-m]");
+    if (b) coverSetMood(b.dataset.m);
+  });
+  $("#cover-open").addEventListener("click", hideCover);
+  $("#cover-toggle").addEventListener("click", () => {
+    db.settings.cover = db.settings.cover === false;
+    persist();
+    renderSettings();
+  });
   $("#lock-open").addEventListener("click", tryUnlock);
   $("#lock-input").addEventListener("keydown", (ev) => { if (ev.key === "Enter") tryUnlock(); });
   document.addEventListener("visibilitychange", () => {
@@ -1817,7 +1990,14 @@ function bind() {
     ev.target.value = "";
   });
   $("#clear-btn").addEventListener("click", clearAll);
-  const onLayoutChange = () => { if (ui.tab === "settings") renderSettings(); };
+  const onLayoutChange = () => {
+    /* 펼치면 표지는 물러나고, 이 기기가 펼쳐진다는 사실을 기억해 둔다 */
+    if (wideMq.matches) {
+      hideCover();
+      if (!db.settings.sawWide) { db.settings.sawWide = true; persist(); }
+    }
+    if (ui.tab === "settings") renderSettings();
+  };
   if (wideMq.addEventListener) wideMq.addEventListener("change", onLayoutChange);
 }
 
@@ -1837,6 +2017,11 @@ function bind() {
   }
   renderAll();
   if (location.hash.includes("new")) newNote();
+  if (wideMq.matches && !db.settings.sawWide) { db.settings.sawWide = true; persist(); }
+  /* 바로가기로 들어왔다면 의도가 분명하니 표지를 건너뛴다 */
+  const viaShortcut = location.hash.includes("new") || location.hash.includes("today");
+  if (viaShortcut) coverDone = true;
+  else if (coverEligible()) showCover();
   if (db.settings.pinHash) lockNow();
   if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
     navigator.serviceWorker.register("./sw.js").catch(() => { /* 미지원 환경 */ });
