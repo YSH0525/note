@@ -51,8 +51,16 @@ Gradle 없이 SDK 도구만 사용한다. `android/build.sh` 참고.
 **출시 작업은 Claude가 맡는다.** 절차는 [store/출시-자동화.md](store/출시-자동화.md),
 등록 정보는 [store/스토어-등록-정보.md](store/스토어-등록-정보.md).
 
+> **다른 앱을 출시할 때는 [store/플레이-출시-플레이북.md](store/플레이-출시-플레이북.md)를
+> 먼저 읽는다.** v1.0을 올리며 워크플로 13번을 돌려 알아낸 것을 앱에 종속되지 않게
+> 정리해 뒀다. 신규 앱은 그 순서대로 하면 한 번에 끝난다.
+
+v1.0은 2026-08-13 프로덕션에 출시됐다(versionCode 1). 앱이 draft 상태를 벗어났으므로
+**다음 버전부터는 아래 순서가 그대로 통한다** — 첫 출시 때 걸렸던 제약은 이제 없다.
+
 - 업로드·트랙 배정·스토어 정보 갱신은 `tools/play-publish.mjs`(Google Play Developer API)로 자동화돼 있다.
-  `.github/workflows/play-publish.yml`이 **`v*` 태그 푸시**와 수동 실행에 반응한다.
+  `.github/workflows/play-publish.yml`이 **`publish/**` 브랜치 푸시**에 반응한다
+  (`v*` 태그와 수동 실행도 받지만 Claude 토큰으로는 못 쓴다).
 - 출시 요청을 받으면 순서대로 한다.
   1. 버전 올리기 — `app/index.html`의 `APP_VERSION` + `AndroidManifest.xml`의 versionName/**versionCode(반드시 증가)**
   2. AAB·APK 재빌드 → `release/`에 배치 (`mkdir -p release` 먼저)
@@ -62,17 +70,31 @@ Gradle 없이 SDK 도구만 사용한다. `android/build.sh` 참고.
      - 프로덕션: `git push origin main:publish/production/vX.Y`
      - 내부 테스트: `git push origin main:publish/vX.Y`
   6. Actions 로그로 성공/실패 확인 후 결과 보고. 실패하면 오류를 고쳐 재시도
+  7. **검증은 플레이에게 묻는다** — `git push origin main:publish/show/vX.Y` 로 트랙·번들·
+     등록정보·이미지를 읽어오고, AAB의 sha256을 `release/` 파일과 대조한다.
+     스크립트가 찍는 "커밋 완료"는 우리 출력일 뿐이다
 - 계정은 **조직(비즈니스) 계정**이라 신규 앱 클로즈드 테스트(12명·14일) 요건이 면제된다.
   내부 테스트를 건너뛰고 바로 프로덕션으로 올려도 된다.
 - **API 함정**: 스토어 이미지는 리소스 이름이 `edits.images` 인데 URL 경로는 `/listings/`다.
   `/images/`로 부르면 종류를 가리지 않고 404가 나는데 권한 문제로 착각하기 쉽다.
   경로가 의심스러우면 디스커버리 문서(`$discovery/rest?version=v3`)를 받아 확인할 것.
-- **Claude가 할 수 없는 것** (사용자만 가능):
+- **커밋이 막히면 담은 내용을 빼가며 좁힌다.** 플레이는 커밋 시점에 한꺼번에 검사하고
+  **문제가 여러 개여도 먼저 걸린 것 하나만** 알려준다. 증상 하나에 원인 하나라고 가정하지 말 것.
+  브랜치로 조합을 고른다 — `publish/text`(문구만) · `publish/listing`(문구+이미지) ·
+  `publish/aab`(AAB+트랙) · `publish/show`(읽기 전용).
+- **스토어 제목은 콘솔 등록명과 일치시킨다.** 콘솔은 `폴드8노트 - 폴더블 노트·다이어리`,
+  `CONFIG.listing.title`도 같은 값. 어긋나면 `--listing`이 사용자가 정한 이름을 덮어쓴다.
+  (앱 안 표기는 아직 `폴드노트` — 통일 여부는 미정)
+- **Claude가 할 수 없는 것** (사용자만 가능). 격리된 클라우드 컨테이너에서 돌기 때문에
+  브라우저로 콘솔에 접속할 수 없다 — 로그인해 두셔도 그 세션을 쓸 수 없다:
   - 플레이 콘솔에서 앱 항목 생성 — API로 새 앱을 만들 수 없다 (완료됨)
+  - **첫 게시** — API에 앱 게시 메서드가 없다(디스커버리 문서 전수 확인). 신규 앱은
+    `draft` 릴리스만 만들 수 있고 게시는 콘솔에서만 (완료됨 — 이후 버전은 해당 없음)
   - 서비스 계정 키를 저장소 시크릿 `PLAY_SERVICE_ACCOUNT_JSON`에 등록 (완료됨)
-  - 데이터 보안·콘텐츠 등급 설문 제출 (답변은 등록 정보 문서에 정리돼 있음)
+  - 데이터 보안·콘텐츠 등급 설문 제출 (완료됨. 답변은 등록 정보 문서에 정리돼 있음)
+  - 서비스 계정 권한 부여 — **스토어 등록정보 관리 권한이 아직 없다.** 등록정보는
+    사용자가 콘솔에서 입력했고, API로 갱신하려면 이 권한을 켜야 한다
   - 워크플로 수동 실행(`workflow_dispatch`)과 태그 푸시는 Claude 토큰 권한 밖 → `publish/**` 브랜치 푸시로 대신한다
-  - 프로덕션 승격은 Actions 탭에서 수동 실행(트랙 production 선택)
 
 ## 디자인 원칙
 

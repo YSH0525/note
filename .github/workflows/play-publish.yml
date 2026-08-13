@@ -1,10 +1,20 @@
 name: Publish to Google Play
 
-# 출시를 시작하는 세 가지 방법
-#  1) 태그 푸시   : v1.0 → 내부 테스트 트랙
-#  2) 브랜치 푸시 : publish/v1.0 → 내부 테스트 / publish/production/v1.0 → 프로덕션
-#                  (Claude 세션 토큰은 태그 푸시·수동 실행이 403이라 이 경로를 쓴다)
-#  3) 수동 실행   : Actions 탭에서 트랙·상태를 직접 선택
+# 브랜치 푸시로 실행한다. 이름이 곧 설정이다.
+# (Claude 세션 토큰은 태그 푸시·수동 실행이 403이라 이 경로를 쓴다)
+#
+#   publish/vX.Y             내부 테스트 트랙, 전부 올림
+#   publish/production/vX.Y  프로덕션 트랙, 전부 올림
+#   publish/listing/vX.Y     스토어 문구 + 이미지만
+#   publish/text/vX.Y        스토어 문구만
+#   publish/aab/vX.Y         AAB + 트랙만 (draft 상태)
+#   publish/show/vX.Y        읽기 전용 — 플레이 쪽 현재 상태 조회
+#
+# 뒤의 네 개는 커밋이 막혔을 때 원인을 좁히는 용도다. 플레이는 커밋 시점에 한꺼번에
+# 검사하고 먼저 걸린 것 하나만 알려주므로, 담는 내용을 빼가며 이분탐색해야 한다.
+# 자세한 내용은 store/플레이-출시-플레이북.md
+#
+# 태그 푸시(v*)와 Actions 탭 수동 실행도 받는다.
 on:
   push:
     tags: ["v*"]
