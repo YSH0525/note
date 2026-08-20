@@ -31,7 +31,7 @@ const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..")
 const CONFIG = {
   packageName: "com.yoonquelabs.foldnote",
   language: "ko-KR",
-  aab: "release/FoldNote-1.0.aab",
+  aab: "release/FoldNote-1.1.aab",
   listing: {
     // 콘솔에 등록된 앱 이름과 맞춰둔다. 다르면 --listing 이 사용자가 정한
     // 이름을 덮어쓴다 (플레이 조회 결과: "폴드8노트 - 폴더블 노트·다이어리").

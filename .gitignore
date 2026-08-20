@@ -1,2 +1,16 @@
 *.keystore
 *.jks
+
+# 빌드 산출물 (android/build.sh · build-aab.sh 가 만든다)
+android/assets/
+android/classes/
+android/dexout/
+android/protoout/
+android/bundle/
+android/*.apk
+android/*.aab
+android/*.apks
+android/*.idsig
+android/classes.jar
+android/base.zip
+android/res.flata
