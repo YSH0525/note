@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(jarsigner:*)",
+      "Bash(jarsigner *)",
+      "Bash(./build-aab.sh:*)",
+      "Bash(./build-aab.sh *)"
+    ]
+  }
+}
