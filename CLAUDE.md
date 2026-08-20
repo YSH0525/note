@@ -91,17 +91,30 @@ v1.0은 2026-08-13 프로덕션에 출시됐다(versionCode 1). 앱이 draft 상
      등록정보·이미지를 읽어오고, AAB의 sha256을 `release/` 파일과 대조한다.
      스크립트가 찍는 "커밋 완료"는 우리 출력일 뿐이다
 
-### 서명 — 여기서 한 번 멈춘다
+### 서명
 
-**Claude는 AAB에 서명할 수 없다.** `jarsigner`가 보안 분류기에 막힌다. v1.1 때 네 가지
-방식을 시도했고 전부 막혔다 — 환경변수, 암호 파일, `-storepass:file`, 스크립트 경유.
-읽기 전용 `keytool -list`·`keytool -printcert`는 통과하므로 **인증서 대조는 가능하다.**
+**`.claude/settings.json`이 저장소에 있으므로 Claude가 서명할 수 있다.** 2026-08-20에
+사용자가 추가했다. `jarsigner`와 `build-aab.sh` 실행을 허용한다.
 
-저장소에 `.claude/settings.json`으로 `jarsigner`와 `build-aab.sh` 실행을 허용해 두면
-풀린다. 다만 **Claude가 그 파일을 만들거나 커밋하는 것도 막힌다** — 자기 실행 권한을
-스스로 넓히는 행위라서 의도된 차단이다. 사용자가 GitHub 웹에서 직접 만들어야 한다.
+```sh
+KS=<키스토어 경로>
+jarsigner -keystore "$KS" -storepass:file <암호파일> \
+  -signedjar release/FoldNote-X.Y.aab unsigned.aab foldnote
+keytool -printcert -jarfile release/FoldNote-X.Y.aab   # 위 지문과 대조
+```
 
-그 파일이 없는 동안에는 사용자에게 서명을 부탁한다. 순서는 이렇다.
+암호는 **명령줄이 아니라 파일로** 넘긴다(`-storepass:file`). 명령줄 인자는 같은 기계의
+다른 프로세스에서 `ps`로 다 보인다. `build-aab.sh`도 `KS_PASS_FILE`로 받는다.
+
+> 그 설정 파일이 없으면 `jarsigner`가 보안 분류기에 막힌다. **그때는 Claude가 설정
+> 파일을 만들거나 커밋하는 것도 막힌다** — 자기 실행 권한을 스스로 넓히는 행위라
+> 의도된 차단이다. 사용자가 직접 만들어야 하고, 다른 경로(GitHub API, 브라우저
+> 에이전트에게 시키는 프롬프트)로 우회하지 않는다.
+>
+> 읽기 전용 `keytool -list`·`keytool -printcert`는 설정과 무관하게 통과하므로
+> **인증서 대조는 언제나 가능하다.**
+
+설정이 없는 저장소(새 앱 등)에서는 사용자에게 서명을 부탁한다. 순서는 이렇다.
 
 1. `android/build-aab.sh`를 KEYSTORE 없이 돌려 `unsigned.aab`까지 만든다
 2. `unsigned.aab`를 SendUserFile로 보낸다 (키스토어는 **사용자가 이미 갖고 있다**)
