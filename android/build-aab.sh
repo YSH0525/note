@@ -3,8 +3,10 @@
 #
 # 사용법:
 #   SDK=<android-sdk 경로> BUNDLETOOL=<bundletool.jar> \
-#   KEYSTORE=<키스토어> KS_PASS=<암호> ./build-aab.sh
+#   KEYSTORE=<키스토어> KS_PASS_FILE=<암호가 든 파일> ./build-aab.sh
 #
+# 암호는 파일로 넘긴다. 명령줄 인자는 같은 기계의 다른 프로세스에서 ps 로 다 보이므로
+# KS_PASS 를 직접 쓰지 않는다 (jarsigner·bundletool 모두 파일 입력을 지원한다).
 # KEYSTORE 를 주지 않으면 서명 없이 unsigned.aab 까지만 만든다.
 # 플레이 업로드에는 서명이 필요하다.
 set -e
@@ -45,14 +47,16 @@ cd bundle && zip -qr ../base.zip . && cd ..
 java -jar "$BUNDLETOOL" build-bundle --modules=base.zip --output=unsigned.aab
 
 if [ -n "$KEYSTORE" ]; then
-  jarsigner -keystore "$KEYSTORE" -storepass "${KS_PASS:?}" \
-    -signedjar "FoldNote-$VER.aab" unsigned.aab "${KS_ALIAS:-foldnote}"
+  KPF="${KS_PASS_FILE:?암호 파일 경로(KS_PASS_FILE)를 지정하세요}"
+  ALIAS="${KS_ALIAS:-foldnote}"
+  jarsigner -keystore "$KEYSTORE" -storepass:file "$KPF" \
+    -signedjar "FoldNote-$VER.aab" unsigned.aab "$ALIAS"
   java -jar "$BUNDLETOOL" validate --bundle "FoldNote-$VER.aab" > /dev/null
   # 설치 가능한 APK 로 뽑히는지까지 확인한다
   java -jar "$BUNDLETOOL" build-apks --bundle "FoldNote-$VER.aab" --output=check.apks \
-    --mode=universal --overwrite --ks "$KEYSTORE" --ks-pass "pass:$KS_PASS" \
-    --ks-key-alias "${KS_ALIAS:-foldnote}" --key-pass "pass:$KS_PASS" > /dev/null
+    --mode=universal --overwrite --ks "$KEYSTORE" --ks-pass "file:$KPF" \
+    --ks-key-alias "$ALIAS" --key-pass "file:$KPF" > /dev/null
   echo "FoldNote-$VER.aab 완성 (검증 통과)"
 else
-  echo "unsigned.aab 완성 — 서명하려면 KEYSTORE 와 KS_PASS 를 주세요"
+  echo "unsigned.aab 완성 — 서명하려면 KEYSTORE 와 KS_PASS_FILE 을 주세요"
 fi
