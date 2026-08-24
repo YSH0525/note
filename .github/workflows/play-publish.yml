@@ -98,6 +98,12 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
           exit 0
 
+      # 버전 세 곳이 맞물리는지, CONFIG.aab 이 이번 버전을 가리키는지, 서명이 있는지,
+      # 권한이 0개인지 확인한다. 여기서 막히면 업로드까지 가지 않는다.
+      - name: 출시 전 점검
+        if: steps.cfg.outputs.only != '--show'
+        run: node tools/preflight.mjs
+
       - name: 사전 점검 (dry-run)
         if: steps.cfg.outputs.only != '--show'
         run: |
