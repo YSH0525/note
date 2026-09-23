@@ -86,6 +86,17 @@ const naming = await page.evaluate(() => {
   return [...PHOTOS].filter((f) => !want.has(f));
 });
 ok("사진 파일명이 카드와 짝이 맞음", naming.length === 0, naming.join(","));
+// 사진이 입력을 받으면 스와이프가 취소되고 길게 누를 때 저장 메뉴가 뜬다 — 사진 파일이 없어도 잡히게 직접 만들어 본다
+const photoInert = await page.evaluate(() => {
+  const img = document.createElement("img");
+  img.className = "photo";
+  document.body.appendChild(img);
+  const cs = getComputedStyle(img);
+  const r = cs.pointerEvents === "none";
+  img.remove();
+  return r;
+});
+ok("사진은 터치·끌기를 받지 않음 (스와이프 보호)", photoInert);
 
 /* 3) 넘기기 */
 await page.locator(".tile").first().click();

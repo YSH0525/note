@@ -45,14 +45,17 @@ def expected_names(category=None):
 
 
 def strip_background(im):
-    """가장자리에서 이어지는 배경색만 투명하게 만든다 (안쪽 흰색은 건드리지 않는다)."""
+    """가장자리에서 이어지는 배경색만 투명하게 만든다 (안쪽 흰색은 건드리지 않는다).
+    돌려주는 두 번째 값: "stripped"(뺐다) · "already"(이미 투명) · "kept"(배경이 밝지 않아 그대로)"""
     im = im.convert("RGBA")
     w, h = im.size
     px = im.load()
     corners = [px[0, 0], px[w - 1, 0], px[0, h - 1], px[w - 1, h - 1]]
+    if all(c[3] < 16 for c in corners):   # API 가 투명 배경으로 준 그림 — 손대지 않는다
+        return im, "already"
     base = tuple(sum(c[i] for c in corners) // 4 for i in range(3))
     if min(base) < 200:            # 배경이 밝지 않으면 손대지 않는다
-        return im, False
+        return im, "kept"
 
     seen = bytearray(w * h)
     q = deque()
@@ -75,11 +78,13 @@ def strip_background(im):
         for nx, ny in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
             if 0 <= nx < w and 0 <= ny < h and not seen[ny * w + nx]:
                 q.append((nx, ny))
-    return im, True
+    return im, "stripped"
 
 
 def square(im):
-    box = im.getbbox()                       # 투명 영역을 뺀 실제 그림 범위
+    # 실제 그림 범위는 알파 채널로 잰다. 투명 픽셀이 (255,255,255,0) 처럼 색을 품고 있으면
+    # 이미지 전체의 getbbox() 는 그 픽셀까지 그림으로 쳐서 여백이 안 잘린다
+    box = im.getchannel("A").point(lambda a: 255 if a > 12 else 0).getbbox()
     if box:
         im = im.crop(box)
     w, h = im.size
@@ -91,13 +96,14 @@ def square(im):
 
 def prep(src, name):
     im = Image.open(src)
-    im, stripped = strip_background(im)
+    im, how = strip_background(im)
     im = square(im)
     os.makedirs(OUT_DIR, exist_ok=True)
     dst = os.path.join(OUT_DIR, name)
     im.save(dst, "WEBP", quality=86, method=6)
     kb = os.path.getsize(dst) // 1024
-    print(f"  {os.path.basename(src)} → {name}  ({kb}KB{'' if stripped else ', 배경 그대로'})")
+    note = {"stripped": "배경 뺌", "already": "원래 투명", "kept": "배경 그대로 — 흰 배경이 아님"}[how]
+    print(f"  {os.path.basename(src)} → {name}  ({kb}KB, {note})")
 
 
 def main():
@@ -132,7 +138,8 @@ def main():
     else:
         sys.exit("--category 또는 --name 을 쓰세요 (--names 로 목록 확인)")
 
-    print("\n다음: node tools/cards-photos.mjs && node tools/cards-check.mjs")
+    if not os.environ.get("CARDS_PREP_QUIET"):   # cards-generate.mjs 가 부를 땐 장마다 찍지 않는다
+        print("\n다음: node tools/cards-photos.mjs && node tools/cards-check.mjs")
 
 
 if __name__ == "__main__":

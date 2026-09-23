@@ -172,6 +172,12 @@ button {
   height: 100%;
   object-fit: contain;
   border-radius: inherit;
+  /* 사진은 입력을 받지 않는다. 받으면 ① 끌 때 브라우저의 이미지 끌어다 놓기가 스와이프를
+     가로채 취소시키고 ② 안드로이드에서 길게 누르면 '이미지 저장' 메뉴가 뜬다 — 아기가
+     그림을 꾹 누르고 있는 건 흔한 일이다. 탭·스와이프는 밑의 카드가 받는다 */
+  pointer-events: none;
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
 }
 .tile-name {
   font-size: clamp(16px, 4vw, 19px);
@@ -1236,6 +1242,7 @@ function paintArt(box, cat, w, art) {
   const img = new Image();
   img.className = "photo";
   img.alt = "";
+  img.draggable = false;
   img.decoding = "async";
   img.addEventListener("load", () => {
     if (box.dataset.key !== cat.id + "/" + w.ko) return;   // 그 사이 카드가 넘어갔으면 버린다
