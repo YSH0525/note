@@ -431,6 +431,22 @@ body.locked .deck-foot { opacity: .9; }
 </head>
 <body>
 
+<!-- 점토 느낌 공용 정의 — 카드 그림들이 url(#c-...) 로 가져다 쓴다 -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <filter id="c-soft" x="-25%" y="-25%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="2.5" stdDeviation="2.4" flood-color="#5A4632" flood-opacity=".30"/>
+    </filter>
+    <!-- 같은 도형 위에 한 번 더 덮어 부피감을 준다: 왼쪽 위는 밝게, 오른쪽 아래는 어둡게 -->
+    <radialGradient id="c-shine" cx="34%" cy="26%" r="78%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity=".50"/>
+      <stop offset="45%" stop-color="#FFFFFF" stop-opacity=".10"/>
+      <stop offset="78%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity=".22"/>
+    </radialGradient>
+  </defs>
+</svg>
+
 <!-- ───────── 표지 ───────── -->
 <main class="screen" id="home">
   <header class="home-head">
@@ -580,6 +596,15 @@ const APP_VERSION = "0.1";
    ──────────────────────────────────────────────────────────── */
 const INK = "#3B3247";
 const svg = (body) => '<svg viewBox="0 0 120 120" role="img" aria-hidden="true">' + body + '</svg>';
+/* 점토 덩어리 — 같은 도형을 색으로 한 번, 광택 그라디언트로 한 번 더 그린다.
+   두 번 그리는 게 핵심이다. 그라디언트를 바로 fill 로 주면 색을 잃는다. */
+const lump = (tag, attrs, fill) =>
+  `<${tag} ${attrs} fill="${fill}"/><${tag} ${attrs} fill="url(#c-shine)"/>`;
+/* 선으로 된 부분(컵 손잡이 등)은 stroke 쪽을 바꾼다 */
+const lumpS = (tag, attrs, stroke) =>
+  `<${tag} ${attrs} stroke="${stroke}"/><${tag} ${attrs} stroke="url(#c-shine)"/>`;
+/* 바닥에 깔리는 옅은 그림자 */
+const floorShadow = (cy, rx) => `<ellipse cx="60" cy="${cy}" rx="${rx}" ry="${rx / 5}" fill="#7A5230" opacity=".15"/>`;
 /** 눈 두 개 + 웃는 입 — 동물 얼굴에 공통으로 쓴다 */
 const face = (lx, rx, y, r, mouthY, mouthW) =>
   `<circle cx="${lx}" cy="${y}" r="${r}" fill="${INK}"/>` +
@@ -630,14 +655,20 @@ const CATEGORIES = [
     id: "animals", name: "동물", color: "#E07B3C", soft: "#FDEBDB", deep: "#241B14", photos: true,
     words: [
       { ko: "강아지", en: "Dog", art: svg(
-        `<ellipse cx="26" cy="68" rx="12" ry="27" fill="#8E5A34" transform="rotate(-10 26 68)"/>` +
-        `<ellipse cx="94" cy="68" rx="12" ry="27" fill="#8E5A34" transform="rotate(10 94 68)"/>` +
-        `<circle cx="60" cy="58" r="34" fill="#B9793F"/>` +
-        `<ellipse cx="60" cy="76" rx="21" ry="16" fill="#F3E0C8"/>` +
-        `<ellipse cx="60" cy="69" rx="8" ry="6" fill="${INK}"/>` +
-        `<path d="M60 75v5" stroke="${INK}" stroke-width="3" stroke-linecap="round"/>` +
-        `<path d="M60 80q-6 6-10 1M60 80q6 6 10 1" stroke="${INK}" stroke-width="3" fill="none" stroke-linecap="round"/>` +
-        `<circle cx="47" cy="50" r="5" fill="${INK}"/><circle cx="73" cy="50" r="5" fill="${INK}"/>`
+        floorShadow(107, 30) +
+        `<g filter="url(#c-soft)">` +
+        lump("ellipse", 'cx="25" cy="68" rx="13" ry="27" transform="rotate(-10 25 68)"', "#8A5A34") +
+        lump("ellipse", 'cx="95" cy="68" rx="13" ry="27" transform="rotate(10 95 68)"', "#8A5A34") +
+        lump("circle", 'cx="60" cy="56" r="35"', "#C08549") +
+        lump("ellipse", 'cx="60" cy="77" rx="23" ry="17"', "#F5E4CD") +
+        lump("ellipse", 'cx="60" cy="69" rx="9" ry="6.5"', "#4A3A33") +
+        `</g>` +
+        `<path d="M60 76v5" stroke="#8B7462" stroke-width="3" fill="none" stroke-linecap="round"/>` +
+        `<path d="M60 81q-6 6-11 1M60 81q6 6 11 1" stroke="#8B7462" stroke-width="3" fill="none" stroke-linecap="round"/>` +
+        lump("path", 'd="M53 87q7 11 14 0z"', "#EC8FA6") +
+        `<circle cx="46" cy="48" r="5.5" fill="#3B3247"/><circle cx="74" cy="48" r="5.5" fill="#3B3247"/>` +
+        `<circle cx="48" cy="46" r="2.1" fill="#FFFFFF" opacity=".92"/><circle cx="76" cy="46" r="2.1" fill="#FFFFFF" opacity=".92"/>` +
+        `<ellipse cx="34" cy="42" rx="7" ry="5" fill="#FFFFFF" opacity=".18" transform="rotate(-25 34 42)"/>`
       ) },
       { ko: "고양이", en: "Cat", art: svg(
         `<path d="M30 48 34 16 58 34z" fill="#A6ADBC"/><path d="M90 48 86 16 62 34z" fill="#A6ADBC"/>` +
@@ -707,10 +738,13 @@ const CATEGORIES = [
     id: "fruits", name: "과일", color: "#E2453F", soft: "#FCE5E2", deep: "#271719", photos: true,
     words: [
       { ko: "사과", en: "Apple", art: svg(
-        `<rect x="57" y="20" width="6" height="16" rx="3" fill="#7A5230"/>` +
-        `<path d="M64 28q14-11 23-3-9 13-23 4z" fill="#5FA83E"/>` +
-        `<path d="M60 36C41 27 22 42 22 62c0 22 15 39 27 39 5 0 7-3 11-3s6 3 11 3c12 0 27-17 27-39 0-20-19-35-38-26z" fill="#E2453F"/>` +
-        `<ellipse cx="42" cy="55" rx="7" ry="11" fill="#FFFFFF" opacity=".33" transform="rotate(-25 42 55)"/>`
+        floorShadow(109, 26) +
+        `<g filter="url(#c-soft)">` +
+        lump("path", 'd="M57 20h6a4 4 0 0 1 4 4v13H53V24a4 4 0 0 1 4-4z" transform="rotate(-7 60 30)"', "#8A6244") +
+        lump("path", 'd="M64 29q17-13 27-4-12 14-27 5z"', "#5FA83E") +
+        lump("path", 'd="M60 38C40 28 20 44 20 64c0 21 15 39 27 39 5 0 8-3 13-3s8 3 13 3c12 0 27-18 27-39 0-20-20-36-40-26z"', "#DF4038") +
+        `</g>` +
+        `<ellipse cx="40" cy="56" rx="7" ry="11" fill="#FFFFFF" opacity=".30" transform="rotate(-22 40 56)"/>`
       ) },
       { ko: "바나나", en: "Banana", art: svg(
         `<path d="M30 24C22 68 52 102 96 96c4-6 3-12-2-15-36 6-58-20-52-57z" fill="#F7D046"/>` +
@@ -820,12 +854,17 @@ const CATEGORIES = [
     id: "vehicles", name: "탈것", color: "#3E7BD1", soft: "#DFEAFB", deep: "#161E2A", photos: true,
     words: [
       { ko: "자동차", en: "Car", art: svg(
-        `<path d="M22 72q4-22 10-26 8-6 28-6t28 6q6 4 10 26z" fill="#E2453F"/>` +
-        `<rect x="14" y="68" width="92" height="22" rx="10" fill="#D8303F"/>` +
-        `<path d="M40 48h16v18H34q3-14 6-18zM64 48h16q3 4 6 18H64z" fill="#CFE6FA"/>` +
-        `<circle cx="38" cy="90" r="12" fill="#3B3247"/><circle cx="82" cy="90" r="12" fill="#3B3247"/>` +
-        `<circle cx="38" cy="90" r="5" fill="#C9CFDA"/><circle cx="82" cy="90" r="5" fill="#C9CFDA"/>` +
-        `<rect x="14" y="74" width="8" height="7" rx="3" fill="#FFD75E"/>`
+        floorShadow(110, 34) +
+        `<g filter="url(#c-soft)">` +
+        lump("path", 'd="M14 86q0-15 9-19l9-4q7-17 28-17t28 17l9 4q9 4 9 19a7 7 0 0 1-7 7H21a7 7 0 0 1-7-7z"', "#DF4038") +
+        lump("path", 'd="M43 50h13v15H35q3-12 8-15z"', "#CDE6FA") +
+        lump("path", 'd="M64 50h13q5 3 8 15H64z"', "#CDE6FA") +
+        lump("ellipse", 'cx="17" cy="78" rx="5" ry="4"', "#FFD75E") +
+        lump("circle", 'cx="37" cy="93" r="13"', "#3B3247") +
+        lump("circle", 'cx="83" cy="93" r="13"', "#3B3247") +
+        `</g>` +
+        lump("circle", 'cx="37" cy="93" r="5.5"', "#D9DEE6") +
+        lump("circle", 'cx="83" cy="93" r="5.5"', "#D9DEE6")
       ) },
       { ko: "버스", en: "Bus", art: svg(
         `<rect x="14" y="26" width="92" height="62" rx="14" fill="#F2B21E"/>` +
@@ -894,10 +933,14 @@ const CATEGORIES = [
     id: "things", name: "생활용품", color: "#7A5BD6", soft: "#EBE4FB", deep: "#1E1830", photos: true,
     words: [
       { ko: "컵", en: "Cup", art: svg(
-        `<path d="M86 48h10a14 14 0 0 1 0 28H86" fill="none" stroke="#7A5BD6" stroke-width="8" stroke-linecap="round"/>` +
-        `<path d="M26 36h60v40a22 22 0 0 1-22 22H48a22 22 0 0 1-22-22z" fill="#8A6BE0"/>` +
-        `<rect x="26" y="36" width="60" height="12" rx="6" fill="#B7A3F0"/>` +
-        `<path d="M46 20q-4 8 0 12M62 16q-5 10 0 16" stroke="#C9C1DE" stroke-width="4.6" fill="none" stroke-linecap="round"/>`
+        floorShadow(106, 27) +
+        `<g filter="url(#c-soft)">` +
+        lumpS("path", 'd="M83 54h7a15 15 0 0 1 0 29h-7" fill="none" stroke-width="11" stroke-linecap="round"', "#8A6BE0") +
+        lump("path", 'd="M26 42h58v37a20 20 0 0 1-20 20H46a20 20 0 0 1-20-20z"', "#7A5BD6") +
+        lump("ellipse", 'cx="55" cy="42" rx="29" ry="9"', "#A78FEA") +
+        `</g>` +
+        `<ellipse cx="55" cy="42" rx="21" ry="5.6" fill="#5B41AC"/>` +
+        `<path d="M44 22q-5 9 0 14M58 17q-6 11 0 17" stroke="#C9C1DE" stroke-width="4.6" fill="none" stroke-linecap="round" opacity=".85"/>`
       ) },
       { ko: "숟가락", en: "Spoon", art: svg(
         `<ellipse cx="60" cy="38" rx="20" ry="26" fill="#C9CFDA"/>` +
