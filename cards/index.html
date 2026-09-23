@@ -1,0 +1,1428 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="author" content="Yoonque Labs">
+<meta name="description" content="아기와 함께 보는 단어카드. 동물·과일·채소·탈것·생활용품·몸·자연·색깔·숫자·모양. 광고 없음, 인터넷 연결 없이 동작. 만든 곳: Yoonque Labs">
+<meta name="theme-color" content="#FFF8EE">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg">
+<title>아기 단어카드</title>
+<style>
+:root {
+  --bg: #FFF6EA;
+  --bg2: #FFEFDC;
+  --card: #FFFFFF;
+  --ink: #332B3F;
+  --ink2: #857B94;
+  --line: #EEE3D4;
+  --accent: #F2792B;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #FFE7D3;
+  --shadow: 0 6px 18px rgba(88, 60, 30, .12);
+  --shadow-lift: 0 12px 30px rgba(88, 60, 30, .18);
+  --art-bg: #FFFFFF;
+  --art-line: #3B3247;
+  --scrim: rgba(51, 43, 63, .45);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #171420;
+    --bg2: #1F1A2B;
+    --card: #262032;
+    --ink: #F1ECF7;
+    --ink2: #A79EB8;
+    --line: #362E46;
+    --accent: #FFA35C;
+    --accent-ink: #2A1B0C;
+    --accent-soft: #3A2C22;
+    --shadow: 0 6px 18px rgba(0, 0, 0, .45);
+    --shadow-lift: 0 12px 30px rgba(0, 0, 0, .55);
+    --art-bg: #EFEAF5;
+    --art-line: #3B3247;
+    --scrim: rgba(0, 0, 0, .6);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #171420;
+  --bg2: #1F1A2B;
+  --card: #262032;
+  --ink: #F1ECF7;
+  --ink2: #A79EB8;
+  --line: #362E46;
+  --accent: #FFA35C;
+  --accent-ink: #2A1B0C;
+  --accent-soft: #3A2C22;
+  --shadow: 0 6px 18px rgba(0, 0, 0, .45);
+  --shadow-lift: 0 12px 30px rgba(0, 0, 0, .55);
+  --art-bg: #EFEAF5;
+  --art-line: #3B3247;
+  --scrim: rgba(0, 0, 0, .6);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+[hidden] { display: none !important; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  overscroll-behavior: none;
+}
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Pretendard", system-ui, -apple-system, "Noto Sans KR", "Malgun Gothic", sans-serif;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+  display: flex;
+  flex-direction: column;
+}
+button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+}
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+.screen {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ───────── 표지 ───────── */
+#home { overflow-y: auto; }
+.home-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px clamp(16px, 4vw, 32px) 10px;
+}
+.brand-mark { width: 44px; height: 44px; flex: none; }
+.brand-text { flex: 1; min-width: 0; }
+.brand-title {
+  font-size: clamp(20px, 5vw, 28px);
+  font-weight: 800;
+  letter-spacing: -.02em;
+  margin: 0;
+}
+.brand-sub {
+  font-size: clamp(12px, 3vw, 14px);
+  color: var(--ink2);
+  margin: 2px 0 0;
+}
+.icon-btn {
+  width: 48px;
+  height: 48px;
+  flex: none;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+.icon-btn svg { width: 24px; height: 24px; }
+.icon-btn:active { transform: scale(.94); }
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: clamp(10px, 2.5vw, 18px);
+  padding: 8px clamp(16px, 4vw, 32px) calc(28px + env(safe-area-inset-bottom));
+}
+@media (min-width: 720px) {
+  .tiles { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+}
+.tile {
+  background: var(--card);
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+  padding: 14px 14px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  transition: transform .12s ease, box-shadow .12s ease;
+  border: 3px solid transparent;
+}
+.tile:active { transform: scale(.96); box-shadow: var(--shadow-lift); }
+.tile-art {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  background: var(--tile-bg, var(--accent-soft));
+}
+.tile-art svg { width: 78%; height: 78%; }
+.tile-name {
+  font-size: clamp(16px, 4vw, 19px);
+  font-weight: 800;
+  letter-spacing: -.02em;
+}
+.tile-count { font-size: 13px; color: var(--ink2); margin-top: -4px; }
+
+/* ───────── 카드 화면 ───────── */
+#deck { background: var(--deck-bg, var(--bg)); }
+.deck-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px clamp(12px, 3vw, 24px);
+  flex: none;
+}
+.deck-title {
+  flex: 1;
+  min-width: 0;
+  font-size: clamp(16px, 4vw, 20px);
+  font-weight: 800;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.deck-head .icon-btn { width: 44px; height: 44px; border-radius: 14px; }
+.icon-btn.on { background: var(--accent); color: var(--accent-ink); }
+
+.stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 clamp(12px, 3vw, 28px);
+  position: relative;
+}
+.card {
+  background: var(--card);
+  border-radius: 32px;
+  box-shadow: var(--shadow-lift);
+  width: 100%;
+  max-width: 780px;
+  height: auto;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(8px, 2vh, 20px);
+  padding: clamp(14px, 3vw, 28px);
+  overflow: hidden;
+}
+/* 그림칸은 남는 높이를 전부 쓴다. 절대배치를 쓰는 이유 —
+   부모 높이가 flex 로 정해져도 grid 자식의 height:100% 는 auto 로 풀려 그림이 작아진다. */
+.card-art {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  aspect-ratio: 1 / 1;   /* 세로 화면에서는 정사각형 — 그림이 카드 폭을 꽉 채운다 */
+  position: relative;
+  /* 그림은 밝은 바탕에 맞춰 그렸다. 어두운 테마에서는 --art-bg 가 밝은 판이 된다
+     (밝은 테마에서는 카드와 같은 흰색이라 티가 나지 않는다) */
+  background: var(--art-bg);
+  border-radius: 22px;
+}
+/* viewBox 가 정사각형이라 preserveAspectRatio 기본값이 알아서 가운데 맞춰 키운다 */
+.card-art svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.card-words { flex: none; text-align: center; }
+.word-ko {
+  font-size: clamp(38px, 11vmin, 92px);
+  font-weight: 800;
+  letter-spacing: -.03em;
+  line-height: 1.1;
+}
+.word-en {
+  font-size: clamp(15px, 3.6vmin, 28px);
+  font-weight: 600;
+  color: var(--ink2);
+  margin-top: 4px;
+  letter-spacing: .01em;
+}
+.speaking .word-ko { color: var(--accent); }
+.card.pop { animation: pop .22s ease; }
+@keyframes pop {
+  from { transform: scale(.94); opacity: .35; }
+  to { transform: scale(1); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card.pop { animation: none; }
+  .tile:active, .icon-btn:active { transform: none; }
+}
+/* 가로 화면(태블릿·폰 가로) — 그림과 글씨를 나란히 */
+@media (orientation: landscape) and (min-height: 380px) {
+  .card { flex-direction: row; gap: clamp(16px, 4vw, 48px); height: 100%; }
+  .card-art { flex: 1 1 55%; width: auto; height: auto; aspect-ratio: auto; align-self: stretch; }
+  .card-words { flex: 1 1 45%; }
+}
+
+.deck-foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(12px, 4vw, 28px);
+  padding: clamp(10px, 2vh, 18px) clamp(12px, 3vw, 24px) clamp(14px, 3vh, 24px);
+}
+.nav-btn {
+  width: clamp(62px, 15vmin, 86px);
+  height: clamp(62px, 15vmin, 86px);
+  border-radius: 50%;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.nav-btn svg { width: 46%; height: 46%; }
+.nav-btn:active { transform: scale(.92); }
+.progress {
+  flex: 1;
+  max-width: 320px;
+  text-align: center;
+  font-size: clamp(14px, 3.4vw, 17px);
+  font-weight: 700;
+  color: var(--ink2);
+  font-variant-numeric: tabular-nums;
+}
+.progress-bar {
+  height: 8px;
+  border-radius: 99px;
+  background: var(--line);
+  margin-top: 8px;
+  overflow: hidden;
+}
+.progress-bar i { display: block; height: 100%; border-radius: 99px; background: var(--accent); transition: width .2s ease; }
+
+/* 아기 잠금 */
+body.locked .deck-head > :not(.lock-btn) { visibility: hidden; }
+body.locked .deck-foot { opacity: .9; }
+.lock-btn { position: relative; overflow: hidden; }
+.lock-btn .hold {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 0;
+  background: var(--accent);
+  opacity: .35;
+  transition: height .1s linear;
+}
+.lock-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  background: var(--scrim);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: 99px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .2s ease;
+}
+.lock-hint.show { opacity: 1; }
+
+/* ───────── 설정 ───────── */
+.sheet-wrap {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: var(--scrim);
+}
+.sheet {
+  width: min(560px, 100%);
+  max-height: 88vh;
+  overflow-y: auto;
+  background: var(--bg);
+  border-radius: 28px 28px 0 0;
+  padding: 20px clamp(16px, 5vw, 28px) calc(28px + env(safe-area-inset-bottom));
+  box-shadow: var(--shadow-lift);
+}
+@media (min-width: 640px) {
+  .sheet-wrap { align-items: center; }
+  .sheet { border-radius: 28px; }
+}
+.sheet h2 { margin: 0 0 16px; font-size: 21px; letter-spacing: -.02em; }
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+.row:last-of-type { border-bottom: 0; }
+.row-label { flex: 1; min-width: 0; }
+.row-label b { display: block; font-size: 16px; font-weight: 700; }
+.row-label span { display: block; font-size: 13px; color: var(--ink2); margin-top: 2px; }
+.seg { display: flex; gap: 6px; flex: none; background: var(--line); padding: 4px; border-radius: 14px; }
+.seg button {
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink2);
+  min-width: 44px;
+}
+.seg button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: var(--shadow); }
+.switch {
+  width: 58px;
+  height: 34px;
+  border-radius: 99px;
+  background: var(--line);
+  position: relative;
+  flex: none;
+  transition: background .15s ease;
+}
+.switch i {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  transition: transform .15s ease;
+}
+.switch[aria-pressed="true"] { background: var(--accent); }
+.switch[aria-pressed="true"] i { transform: translateX(24px); }
+.note {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink2);
+  background: var(--accent-soft);
+  border-radius: 16px;
+  padding: 12px 14px;
+  margin-top: 16px;
+}
+.sheet-close {
+  width: 100%;
+  margin-top: 18px;
+  padding: 16px;
+  border-radius: 18px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 800;
+  font-size: 17px;
+}
+.credit { text-align: center; font-size: 12px; color: var(--ink2); margin-top: 14px; }
+</style>
+</head>
+<body>
+
+<!-- ───────── 표지 ───────── -->
+<main class="screen" id="home">
+  <header class="home-head">
+    <svg class="brand-mark" viewBox="0 0 48 48" aria-hidden="true">
+      <rect x="4" y="8" width="30" height="34" rx="8" fill="#FFC44D"/>
+      <rect x="14" y="6" width="30" height="34" rx="8" fill="#F2792B"/>
+      <circle cx="24" cy="17" r="3.4" fill="#FFF3E0"/>
+      <circle cx="35" cy="17" r="3.4" fill="#FFF3E0"/>
+      <path d="M23 27 q6.5 7 13 0" stroke="#FFF3E0" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+    </svg>
+    <div class="brand-text">
+      <h1 class="brand-title">아기 단어카드</h1>
+      <p class="brand-sub">그림을 누르면 이름을 읽어줘요</p>
+    </div>
+    <button class="icon-btn" id="btnSettings" aria-label="설정">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="3.2"/>
+        <path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/>
+      </svg>
+    </button>
+  </header>
+  <div class="tiles" id="tiles"></div>
+</main>
+
+<!-- ───────── 카드 화면 ───────── -->
+<main class="screen" id="deck" hidden>
+  <header class="deck-head">
+    <button class="icon-btn" id="btnBack" aria-label="목록으로">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M15 5l-7 7 7 7"/>
+      </svg>
+    </button>
+    <div class="deck-title" id="deckTitle">동물</div>
+    <button class="icon-btn" id="btnShuffle" aria-label="섞기">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 6h4l10 12h4M3 18h4l3-3.6M14 8.6L17 6h4"/>
+        <path d="M18 3l3 3-3 3M18 15l3 3-3 3"/>
+      </svg>
+    </button>
+    <button class="icon-btn" id="btnAuto" aria-label="자동 넘김" aria-pressed="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M8 5l11 7-11 7z"/>
+      </svg>
+    </button>
+    <button class="icon-btn lock-btn" id="btnLock" aria-label="아기 잠금" aria-pressed="false">
+      <i class="hold"></i>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="4" y="10" width="16" height="11" rx="3"/>
+        <path d="M8 10V7a4 4 0 0 1 8 0v3" id="lockShackle"/>
+      </svg>
+    </button>
+  </header>
+
+  <div class="stage" id="stage">
+    <button class="card" id="card" aria-label="카드. 누르면 소리가 나요">
+      <div class="card-art" id="cardArt"></div>
+      <div class="card-words">
+        <div class="word-ko" id="wordKo">강아지</div>
+        <div class="word-en" id="wordEn">Puppy</div>
+      </div>
+    </button>
+    <div class="lock-hint" id="lockHint">자물쇠를 길게 누르면 잠금이 풀려요</div>
+  </div>
+
+  <footer class="deck-foot">
+    <button class="nav-btn" id="btnPrev" aria-label="이전 카드">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M15 5l-7 7 7 7"/>
+      </svg>
+    </button>
+    <div class="progress">
+      <span id="progressText">1 / 8</span>
+      <div class="progress-bar"><i id="progressFill"></i></div>
+    </div>
+    <button class="nav-btn" id="btnNext" aria-label="다음 카드">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M9 5l7 7-7 7"/>
+      </svg>
+    </button>
+  </footer>
+</main>
+
+<!-- ───────── 설정 ───────── -->
+<div class="sheet-wrap" id="settings" hidden>
+  <section class="sheet" role="dialog" aria-modal="true" aria-label="설정">
+    <h2>설정</h2>
+
+    <div class="row">
+      <div class="row-label"><b>소리로 읽어주기</b><span id="voiceState">기기 음성으로 단어를 읽어요</span></div>
+      <button class="switch" id="swSpeak" aria-pressed="true" aria-label="소리로 읽어주기"><i></i></button>
+    </div>
+
+    <div class="row">
+      <div class="row-label"><b>말하기 속도</b><span>아기에게는 느린 쪽이 좋아요</span></div>
+      <div class="seg" id="segRate">
+        <button data-v="0.7" aria-pressed="false">느리게</button>
+        <button data-v="0.85" aria-pressed="true">보통</button>
+        <button data-v="1" aria-pressed="false">빠르게</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="row-label"><b>영어 함께 보기</b><span>한글 아래에 영어 단어를 보여줘요</span></div>
+      <button class="switch" id="swEnglish" aria-pressed="true" aria-label="영어 함께 보기"><i></i></button>
+    </div>
+
+    <div class="row">
+      <div class="row-label"><b>자동 넘김 간격</b><span>▶ 버튼을 눌렀을 때 넘어가는 속도</span></div>
+      <div class="seg" id="segAuto">
+        <button data-v="3000" aria-pressed="false">3초</button>
+        <button data-v="5000" aria-pressed="true">5초</button>
+        <button data-v="8000" aria-pressed="false">8초</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="row-label"><b>화면 밝기 테마</b><span>어두운 곳에서는 어둡게</span></div>
+      <div class="seg" id="segTheme">
+        <button data-v="auto" aria-pressed="true">기기</button>
+        <button data-v="light" aria-pressed="false">밝게</button>
+        <button data-v="dark" aria-pressed="false">어둡게</button>
+      </div>
+    </div>
+
+    <p class="note">
+      <b>아기 잠금</b> — 카드 화면 오른쪽 위 자물쇠를 누르면 다른 버튼이 숨어서
+      아기가 눌러도 빠져나가지 않아요. 풀 때는 자물쇠를 <b>2초 길게</b> 누르세요.
+    </p>
+    <p class="note">
+      이 앱은 인터넷 연결 없이 동작하고, 아무 정보도 모으지 않으며 광고가 없습니다.
+      권한도 하나도 쓰지 않습니다.
+    </p>
+
+    <button class="sheet-close" id="btnCloseSettings">닫기</button>
+    <p class="credit">아기 단어카드 <span id="verText">0.1</span> · Yoonque Labs</p>
+  </section>
+</div>
+
+<script>
+"use strict";
+
+const APP_VERSION = "0.1";
+
+/* ────────────────────────────────────────────────────────────
+   그림 — 모두 코드로 그린 SVG. viewBox 0 0 120 120 로 통일한다.
+   기기·OS에 따라 달라지는 이모지를 쓰지 않으므로 어디서나 같은 그림이 나온다.
+   ──────────────────────────────────────────────────────────── */
+const INK = "#3B3247";
+const svg = (body) => '<svg viewBox="0 0 120 120" role="img" aria-hidden="true">' + body + '</svg>';
+/** 눈 두 개 + 웃는 입 — 동물 얼굴에 공통으로 쓴다 */
+const face = (lx, rx, y, r, mouthY, mouthW) =>
+  `<circle cx="${lx}" cy="${y}" r="${r}" fill="${INK}"/>` +
+  `<circle cx="${rx}" cy="${y}" r="${r}" fill="${INK}"/>` +
+  (mouthY ? `<path d="M${60 - mouthW} ${mouthY} q${mouthW} ${mouthW * 0.7} ${mouthW * 2} 0" stroke="${INK}" stroke-width="3" fill="none" stroke-linecap="round"/>` : "");
+
+/** 아이 얼굴 — '몸' 카테고리에서 부위만 바꿔 가며 쓴다 */
+const kidFace = (extra, off) => {
+  off = off || {};
+  return svg(
+    `<circle cx="60" cy="64" r="38" fill="#F3CFAE"/>` +
+    `<path d="M22 58a38 38 0 0 1 76 0q-16-14-38-14t-38 14z" fill="#4A3527"/>` +
+    (off.ears ? "" : `<ellipse cx="23" cy="68" rx="7" ry="10" fill="#EBC09B"/><ellipse cx="97" cy="68" rx="7" ry="10" fill="#EBC09B"/>`) +
+    (off.eyes ? "" : `<circle cx="46" cy="64" r="4.5" fill="${INK}"/><circle cx="74" cy="64" r="4.5" fill="${INK}"/>`) +
+    (off.nose ? "" : `<path d="M60 70v6" stroke="${INK}" stroke-width="3" stroke-linecap="round"/>`) +
+    (off.mouth ? "" : `<path d="M50 84q10 8 20 0" stroke="${INK}" stroke-width="3.2" fill="none" stroke-linecap="round"/>`) +
+    (extra || "")
+  );
+};
+
+/** 숫자 — 숫자꼴 하나와 그 개수만큼의 동그라미 */
+const numberArt = (n) => {
+  const cols = n <= 5 ? n : Math.ceil(n / 2);
+  const rows = n <= 5 ? 1 : 2;
+  let dots = "";
+  for (let i = 0; i < n; i++) {
+    const r = Math.floor(i / cols), c = i % cols;
+    const inRow = r === rows - 1 ? n - cols * r : cols;
+    const gap = 92 / cols;
+    const x = 60 - (inRow - 1) * gap / 2 + c * gap;
+    const y = rows === 1 ? 92 : 84 + r * 20;
+    dots += `<circle cx="${x}" cy="${y}" r="${Math.min(8, gap / 2.6)}" fill="#5B6B7D"/>`;
+  }
+  return svg(
+    `<text x="60" y="${rows === 1 ? 70 : 58}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="${rows === 1 ? 72 : 58}" font-weight="800" fill="#3E4E60">${n}</text>` +
+    dots
+  );
+};
+
+/** 색깔 — 동그라미 하나. 흰색처럼 옅은 색은 테두리를 준다 */
+const colorArt = (fill, ring) => svg(
+  `<circle cx="60" cy="60" r="44" fill="${fill}"${ring ? ` stroke="${ring}" stroke-width="3"` : ""}/>` +
+  `<ellipse cx="44" cy="42" rx="12" ry="8" fill="#FFFFFF" opacity=".38" transform="rotate(-30 44 42)"/>`
+);
+
+const CATEGORIES = [
+  {
+    id: "animals", name: "동물", color: "#E07B3C", soft: "#FDEBDB", deep: "#241B14",
+    words: [
+      { ko: "강아지", en: "Dog", art: svg(
+        `<ellipse cx="26" cy="68" rx="12" ry="27" fill="#8E5A34" transform="rotate(-10 26 68)"/>` +
+        `<ellipse cx="94" cy="68" rx="12" ry="27" fill="#8E5A34" transform="rotate(10 94 68)"/>` +
+        `<circle cx="60" cy="58" r="34" fill="#B9793F"/>` +
+        `<ellipse cx="60" cy="76" rx="21" ry="16" fill="#F3E0C8"/>` +
+        `<ellipse cx="60" cy="69" rx="8" ry="6" fill="${INK}"/>` +
+        `<path d="M60 75v5" stroke="${INK}" stroke-width="3" stroke-linecap="round"/>` +
+        `<path d="M60 80q-6 6-10 1M60 80q6 6 10 1" stroke="${INK}" stroke-width="3" fill="none" stroke-linecap="round"/>` +
+        `<circle cx="47" cy="50" r="5" fill="${INK}"/><circle cx="73" cy="50" r="5" fill="${INK}"/>`
+      ) },
+      { ko: "고양이", en: "Cat", art: svg(
+        `<path d="M30 48 34 16 58 34z" fill="#A6ADBC"/><path d="M90 48 86 16 62 34z" fill="#A6ADBC"/>` +
+        `<path d="M37 40 39 26 50 34z" fill="#EEC3CD"/><path d="M83 40 81 26 70 34z" fill="#EEC3CD"/>` +
+        `<circle cx="60" cy="64" r="34" fill="#BCC3D0"/>` +
+        `<path d="M14 58h20M14 68h20M86 58h20M86 68h20" stroke="${INK}" stroke-width="2.6" stroke-linecap="round" opacity=".6"/>` +
+        `<path d="M54 68 66 68 60 75z" fill="#E28FA3"/>` +
+        `<path d="M60 75q-6 7-11 1M60 75q6 7 11 1" stroke="${INK}" stroke-width="3" fill="none" stroke-linecap="round"/>` +
+        `<ellipse cx="47" cy="58" rx="4.6" ry="6" fill="${INK}"/><ellipse cx="73" cy="58" rx="4.6" ry="6" fill="${INK}"/>`
+      ) },
+      { ko: "토끼", en: "Rabbit", art: svg(
+        `<ellipse cx="45" cy="32" rx="10" ry="25" fill="#F7F3FA" stroke="#DFD6E8" stroke-width="2.4"/>` +
+        `<ellipse cx="75" cy="32" rx="10" ry="25" fill="#F7F3FA" stroke="#DFD6E8" stroke-width="2.4"/>` +
+        `<ellipse cx="45" cy="33" rx="4.6" ry="16" fill="#F3C6D2"/><ellipse cx="75" cy="33" rx="4.6" ry="16" fill="#F3C6D2"/>` +
+        `<circle cx="60" cy="74" r="31" fill="#FAF7FC" stroke="#DFD6E8" stroke-width="2.4"/>` +
+        `<path d="M55 76 65 76 60 82z" fill="#E88FA5"/>` +
+        `<path d="M60 82q-6 6-10 1M60 82q6 6 10 1" stroke="${INK}" stroke-width="2.8" fill="none" stroke-linecap="round"/>` +
+        `<circle cx="47" cy="70" r="4.6" fill="${INK}"/><circle cx="73" cy="70" r="4.6" fill="${INK}"/>`
+      ) },
+      { ko: "곰", en: "Bear", art: svg(
+        `<circle cx="30" cy="34" r="15" fill="#8A6246"/><circle cx="90" cy="34" r="15" fill="#8A6246"/>` +
+        `<circle cx="30" cy="34" r="7.5" fill="#C79A78"/><circle cx="90" cy="34" r="7.5" fill="#C79A78"/>` +
+        `<circle cx="60" cy="66" r="35" fill="#A6785A"/>` +
+        `<ellipse cx="60" cy="80" rx="18" ry="14" fill="#E8D3BF"/>` +
+        `<ellipse cx="60" cy="74" rx="7" ry="5" fill="${INK}"/>` +
+        `<path d="M60 79v4" stroke="${INK}" stroke-width="2.8" stroke-linecap="round"/>` +
+        `<path d="M60 83q-5 5-9 1M60 83q5 5 9 1" stroke="${INK}" stroke-width="2.8" fill="none" stroke-linecap="round"/>` +
+        `<circle cx="47" cy="58" r="4.8" fill="${INK}"/><circle cx="73" cy="58" r="4.8" fill="${INK}"/>`
+      ) },
+      { ko: "사자", en: "Lion", art: svg(
+        `<g fill="#D3912F">` +
+        `<circle cx="102" cy="60" r="13"/><circle cx="94" cy="85" r="13"/><circle cx="73" cy="100" r="13"/>` +
+        `<circle cx="47" cy="100" r="13"/><circle cx="26" cy="85" r="13"/><circle cx="18" cy="60" r="13"/>` +
+        `<circle cx="26" cy="35" r="13"/><circle cx="47" cy="20" r="13"/><circle cx="73" cy="20" r="13"/><circle cx="94" cy="35" r="13"/>` +
+        `</g>` +
+        `<circle cx="60" cy="60" r="40" fill="#E2A63D"/>` +
+        `<circle cx="60" cy="62" r="29" fill="#F6D48E"/>` +
+        `<path d="M54 66 66 66 60 72z" fill="#9A5F2E"/>` +
+        `<path d="M60 72q-6 7-11 1M60 72q6 7 11 1" stroke="${INK}" stroke-width="3" fill="none" stroke-linecap="round"/>` +
+        `<circle cx="49" cy="56" r="4.6" fill="${INK}"/><circle cx="71" cy="56" r="4.6" fill="${INK}"/>`
+      ) },
+      { ko: "코끼리", en: "Elephant", art: svg(
+        `<ellipse cx="24" cy="56" rx="20" ry="25" fill="#93A0B3"/><ellipse cx="96" cy="56" rx="20" ry="25" fill="#93A0B3"/>` +
+        `<circle cx="60" cy="56" r="31" fill="#AEBACB"/>` +
+        `<path d="M60 76q0 20 13 25 10 4 13-6" stroke="#AEBACB" stroke-width="16" fill="none" stroke-linecap="round"/>` +
+        `<circle cx="48" cy="50" r="4.8" fill="${INK}"/><circle cx="72" cy="50" r="4.8" fill="${INK}"/>`
+      ) },
+      { ko: "돼지", en: "Pig", art: svg(
+        `<path d="M30 30 54 34 40 54z" fill="#E88CA2"/><path d="M90 30 66 34 80 54z" fill="#E88CA2"/>` +
+        `<circle cx="60" cy="64" r="35" fill="#F4B3C1"/>` +
+        `<ellipse cx="60" cy="72" rx="18" ry="14" fill="#E88CA2"/>` +
+        `<ellipse cx="53" cy="72" rx="3.4" ry="5" fill="#AE5069"/><ellipse cx="67" cy="72" rx="3.4" ry="5" fill="#AE5069"/>` +
+        face(47, 73, 54, 4.8, 0, 0)
+      ) },
+      { ko: "병아리", en: "Chick", art: svg(
+        `<path d="M44 104l-7 8M52 104v10M76 104l7 8M68 104v10" stroke="#E8912C" stroke-width="4" stroke-linecap="round"/>` +
+        `<ellipse cx="60" cy="74" rx="33" ry="30" fill="#F6C932"/>` +
+        `<ellipse cx="38" cy="74" rx="11" ry="15" fill="#EEBB22" transform="rotate(-12 38 74)"/>` +
+        `<circle cx="60" cy="40" r="23" fill="#FBD94F"/>` +
+        `<path d="M60 44 72 50 60 55z" fill="#F08A2B"/>` +
+        `<circle cx="51" cy="35" r="4.2" fill="${INK}"/><circle cx="68" cy="35" r="4.2" fill="${INK}"/>`
+      ) }
+    ]
+  },
+
+  {
+    id: "fruits", name: "과일", color: "#E2453F", soft: "#FCE5E2", deep: "#271719",
+    words: [
+      { ko: "사과", en: "Apple", art: svg(
+        `<rect x="57" y="20" width="6" height="16" rx="3" fill="#7A5230"/>` +
+        `<path d="M64 28q14-11 23-3-9 13-23 4z" fill="#5FA83E"/>` +
+        `<path d="M60 36C41 27 22 42 22 62c0 22 15 39 27 39 5 0 7-3 11-3s6 3 11 3c12 0 27-17 27-39 0-20-19-35-38-26z" fill="#E2453F"/>` +
+        `<ellipse cx="42" cy="55" rx="7" ry="11" fill="#FFFFFF" opacity=".33" transform="rotate(-25 42 55)"/>`
+      ) },
+      { ko: "바나나", en: "Banana", art: svg(
+        `<path d="M30 24C22 68 52 102 96 96c4-6 3-12-2-15-36 6-58-20-52-57z" fill="#F7D046"/>` +
+        `<path d="M30 24C22 68 52 102 96 96l-2-6C58 92 36 64 42 24z" fill="#E7BC33"/>` +
+        `<path d="M28 26q6-12 16-8-4 8-4 12z" fill="#8A6A3A"/>` +
+        `<path d="M94 81q10 2 10 10-8 4-12 0z" fill="#8A6A3A"/>`
+      ) },
+      { ko: "딸기", en: "Strawberry", art: svg(
+        `<path d="M60 34c23 0 35 15 35 31 0 23-21 37-35 45-14-8-35-22-35-45 0-16 12-31 35-31z" fill="#E33B4E"/>` +
+        `<path d="M60 20c4 6 4 10 3 14 6-5 11-6 16-5-3 6-7 9-12 11 7 0 11 2 14 6-7 3-13 3-21 2-8 1-14 1-21-2 3-4 7-6 14-6-5-2-9-5-12-11 5-1 10 0 16 5-1-4-1-8 3-14z" fill="#4FA24A"/>` +
+        `<g fill="#FFE08A">` +
+        `<ellipse cx="45" cy="55" rx="3" ry="4"/><ellipse cx="60" cy="50" rx="3" ry="4"/><ellipse cx="75" cy="55" rx="3" ry="4"/>` +
+        `<ellipse cx="38" cy="70" rx="3" ry="4"/><ellipse cx="53" cy="68" rx="3" ry="4"/><ellipse cx="68" cy="68" rx="3" ry="4"/><ellipse cx="82" cy="70" rx="3" ry="4"/>` +
+        `<ellipse cx="46" cy="84" rx="3" ry="4"/><ellipse cx="60" cy="86" rx="3" ry="4"/><ellipse cx="74" cy="84" rx="3" ry="4"/>` +
+        `</g>`
+      ) },
+      { ko: "포도", en: "Grapes", art: svg(
+        `<path d="M60 30v12" stroke="#7A5230" stroke-width="5" stroke-linecap="round"/>` +
+        `<path d="M62 32q14-12 24-4-10 12-24 4z" fill="#5FA83E"/>` +
+        `<g fill="#8A5BC7">` +
+        `<circle cx="48" cy="48" r="12"/><circle cx="72" cy="48" r="12"/>` +
+        `<circle cx="36" cy="66" r="12"/><circle cx="60" cy="64" r="12"/><circle cx="84" cy="66" r="12"/>` +
+        `<circle cx="48" cy="83" r="12"/><circle cx="72" cy="83" r="12"/>` +
+        `<circle cx="60" cy="98" r="11"/>` +
+        `</g>` +
+        `<circle cx="44" cy="44" r="3.4" fill="#FFFFFF" opacity=".4"/><circle cx="56" cy="60" r="3.4" fill="#FFFFFF" opacity=".4"/>`
+      ) },
+      { ko: "수박", en: "Watermelon", art: svg(
+        `<path d="M12 36h96a48 48 0 0 1-96 0z" fill="#3FA05C"/>` +
+        `<path d="M19 43h82a41 41 0 0 1-82 0z" fill="#FBF6EC"/>` +
+        `<path d="M24 49h72a36 36 0 0 1-72 0z" fill="#E6465A"/>` +
+        `<g fill="#3B3247"><ellipse cx="45" cy="60" rx="3.4" ry="4.6"/><ellipse cx="60" cy="68" rx="3.4" ry="4.6"/><ellipse cx="75" cy="60" rx="3.4" ry="4.6"/><ellipse cx="52" cy="78" rx="3.4" ry="4.6"/><ellipse cx="68" cy="78" rx="3.4" ry="4.6"/></g>`
+      ) },
+      { ko: "귤", en: "Tangerine", art: svg(
+        `<circle cx="60" cy="66" r="36" fill="#F5922B"/>` +
+        `<path d="M60 30v8" stroke="#7A5230" stroke-width="5" stroke-linecap="round"/>` +
+        `<path d="M62 32q13-11 22-3-10 11-22 3z" fill="#5FA83E"/>` +
+        `<ellipse cx="60" cy="32" rx="7" ry="3.4" fill="#D97A1E"/>` +
+        `<ellipse cx="45" cy="54" rx="9" ry="6" fill="#FFFFFF" opacity=".3" transform="rotate(-25 45 54)"/>`
+      ) },
+      { ko: "복숭아", en: "Peach", art: svg(
+        `<path d="M60 26v10" stroke="#7A5230" stroke-width="5" stroke-linecap="round"/>` +
+        `<path d="M62 30q13-11 22-3-10 11-22 3z" fill="#5FA83E"/>` +
+        `<path d="M60 36c21 0 36 15 36 33 0 19-16 33-36 33S24 88 24 69c0-18 15-33 36-33z" fill="#F79C8E"/>` +
+        `<path d="M60 36c-21 0-36 15-36 33 0 19 16 33 36 33z" fill="#FBB6A6"/>` +
+        `<path d="M60 40q-6 30 0 60" stroke="#E4796C" stroke-width="2.6" fill="none"/>`
+      ) },
+      { ko: "체리", en: "Cherry", art: svg(
+        `<path d="M60 22q-16 16-18 42M60 22q14 18 18 40" stroke="#5FA83E" stroke-width="5" fill="none" stroke-linecap="round"/>` +
+        `<path d="M60 24q16-12 26-2-13 10-26 2z" fill="#4C9B3C"/>` +
+        `<circle cx="40" cy="80" r="20" fill="#D8303F"/><circle cx="82" cy="76" r="18" fill="#E2453F"/>` +
+        `<circle cx="34" cy="73" r="4.6" fill="#FFFFFF" opacity=".38"/><circle cx="77" cy="70" r="4" fill="#FFFFFF" opacity=".38"/>`
+      ) }
+    ]
+  },
+
+  {
+    id: "vegetables", name: "채소", color: "#3FA05C", soft: "#E1F2E6", deep: "#15231A",
+    words: [
+      { ko: "당근", en: "Carrot", art: svg(
+        `<path d="M60 36q-9-14-24-16 3 14 14 20zM60 36q9-14 24-16-3 14-14 20zM60 34q0-16-8-24-8 12-4 24z" fill="#4C9B3C"/>` +
+        `<path d="M60 106 40 46q20-9 40 0z" fill="#F0842B"/>` +
+        `<path d="M46 62h12M50 76h10M54 90h6" stroke="#D96F1C" stroke-width="3" stroke-linecap="round"/>`
+      ) },
+      { ko: "토마토", en: "Tomato", art: svg(
+        `<circle cx="60" cy="68" r="36" fill="#E2453F"/>` +
+        `<path d="M60 22v12" stroke="#4C9B3C" stroke-width="6" stroke-linecap="round"/>` +
+        `<path d="M60 34 40 26q0 12 20 8zM60 34 80 26q0 12-20 8zM60 34 46 44q10 4 14-10zM60 34 74 44q-10 4-14-10z" fill="#4C9B3C"/>` +
+        `<ellipse cx="45" cy="56" rx="9" ry="6" fill="#FFFFFF" opacity=".28" transform="rotate(-25 45 56)"/>`
+      ) },
+      { ko: "오이", en: "Cucumber", art: svg(
+        `<rect x="26" y="46" width="68" height="28" rx="14" fill="#3E9A4E" transform="rotate(-28 60 60)"/>` +
+        `<rect x="32" y="52" width="56" height="16" rx="8" fill="#55B063" transform="rotate(-28 60 60)"/>` +
+        `<g fill="#2F7A3D"><circle cx="46" cy="76" r="2.6"/><circle cx="56" cy="66" r="2.6"/><circle cx="66" cy="56" r="2.6"/><circle cx="76" cy="46" r="2.6"/></g>` +
+        `<path d="M92 32l8-8" stroke="#4C9B3C" stroke-width="5" stroke-linecap="round"/>`
+      ) },
+      { ko: "옥수수", en: "Corn", art: svg(
+        `<path d="M32 46q-8 36 14 54-4-38-14-54zM88 46q8 36-14 54 4-38 14-54z" fill="#4C9B3C"/>` +
+        `<ellipse cx="60" cy="62" rx="24" ry="44" fill="#F6C932"/>` +
+        `<g stroke="#DDA81E" stroke-width="2.6"><path d="M48 26v72M60 22v80M72 26v72"/><path d="M38 40h44M36 56h48M36 72h48M40 88h40"/></g>` +
+        `<path d="M60 18q-6-8-2-12 8 4 8 12z" fill="#E8C87A"/>`
+      ) },
+      { ko: "가지", en: "Eggplant", art: svg(
+        `<path d="M74 34c14 8 20 24 14 40-8 22-34 32-50 22-14-9-16-28-4-42 10-12 26-26 40-20z" fill="#7A4BA8"/>` +
+        `<path d="M70 20c-8 2-14 8-16 16 10 4 20 2 26-4-2 8 2 14 8 16 4-12-2-26-18-28z" fill="#4C9B3C"/>` +
+        `<path d="M50 56q-8 10-8 22" stroke="#FFFFFF" stroke-width="5" opacity=".25" fill="none" stroke-linecap="round"/>`
+      ) },
+      { ko: "브로콜리", en: "Broccoli", art: svg(
+        `<path d="M52 66h16v34a8 8 0 0 1-16 0z" fill="#9BC46A"/>` +
+        `<g fill="#3E9A4E"><circle cx="42" cy="54" r="18"/><circle cx="78" cy="54" r="18"/><circle cx="60" cy="40" r="20"/><circle cx="60" cy="62" r="18"/></g>` +
+        `<g fill="#4FB061"><circle cx="50" cy="38" r="7"/><circle cx="72" cy="34" r="6"/><circle cx="40" cy="58" r="6"/><circle cx="80" cy="60" r="6"/></g>`
+      ) },
+      { ko: "감자", en: "Potato", art: svg(
+        `<path d="M34 46c12-16 44-18 56-4 12 14 8 40-10 50-18 10-46 6-52-10-5-13-4-26 6-36z" fill="#C79A61"/>` +
+        `<g fill="#9E7742"><ellipse cx="48" cy="56" rx="4" ry="3"/><ellipse cx="72" cy="50" rx="3.4" ry="2.6"/><ellipse cx="80" cy="74" rx="4" ry="3"/><ellipse cx="54" cy="82" rx="3.4" ry="2.6"/></g>`
+      ) },
+      { ko: "호박", en: "Pumpkin", art: svg(
+        `<path d="M58 28q-4-10 6-12 2 8-2 12z" fill="#4C9B3C"/>` +
+        `<rect x="55" y="24" width="10" height="14" rx="4" fill="#7A5230"/>` +
+        `<ellipse cx="38" cy="70" rx="22" ry="32" fill="#E8862C"/><ellipse cx="82" cy="70" rx="22" ry="32" fill="#E8862C"/>` +
+        `<ellipse cx="60" cy="70" rx="30" ry="34" fill="#F5922B"/>` +
+        `<path d="M48 44q-6 26 0 52M72 44q6 26 0 52" stroke="#D97A1E" stroke-width="3" fill="none"/>`
+      ) }
+    ]
+  },
+  {
+    id: "vehicles", name: "탈것", color: "#3E7BD1", soft: "#DFEAFB", deep: "#161E2A",
+    words: [
+      { ko: "자동차", en: "Car", art: svg(
+        `<path d="M22 72q4-22 10-26 8-6 28-6t28 6q6 4 10 26z" fill="#E2453F"/>` +
+        `<rect x="14" y="68" width="92" height="22" rx="10" fill="#D8303F"/>` +
+        `<path d="M40 48h16v18H34q3-14 6-18zM64 48h16q3 4 6 18H64z" fill="#CFE6FA"/>` +
+        `<circle cx="38" cy="90" r="12" fill="#3B3247"/><circle cx="82" cy="90" r="12" fill="#3B3247"/>` +
+        `<circle cx="38" cy="90" r="5" fill="#C9CFDA"/><circle cx="82" cy="90" r="5" fill="#C9CFDA"/>` +
+        `<rect x="14" y="74" width="8" height="7" rx="3" fill="#FFD75E"/>`
+      ) },
+      { ko: "버스", en: "Bus", art: svg(
+        `<rect x="14" y="26" width="92" height="62" rx="14" fill="#F2B21E"/>` +
+        `<rect x="22" y="36" width="30" height="20" rx="5" fill="#CFE6FA"/>` +
+        `<rect x="58" y="36" width="18" height="20" rx="5" fill="#CFE6FA"/>` +
+        `<rect x="82" y="36" width="18" height="20" rx="5" fill="#CFE6FA"/>` +
+        `<rect x="14" y="62" width="92" height="8" fill="#DA9A12"/>` +
+        `<circle cx="36" cy="90" r="12" fill="#3B3247"/><circle cx="84" cy="90" r="12" fill="#3B3247"/>` +
+        `<circle cx="36" cy="90" r="5" fill="#C9CFDA"/><circle cx="84" cy="90" r="5" fill="#C9CFDA"/>`
+      ) },
+      { ko: "기차", en: "Train", art: svg(
+        `<rect x="12" y="84" width="96" height="6" rx="3" fill="#9AA3B2"/>` +
+        `<rect x="54" y="40" width="52" height="42" rx="10" fill="#3E7BD1"/>` +
+        `<rect x="62" y="48" width="16" height="16" rx="4" fill="#CFE6FA"/>` +
+        `<rect x="84" y="48" width="16" height="16" rx="4" fill="#CFE6FA"/>` +
+        `<rect x="14" y="52" width="36" height="30" rx="8" fill="#E2453F"/>` +
+        `<rect x="20" y="58" width="24" height="14" rx="4" fill="#CFE6FA"/>` +
+        `<rect x="24" y="34" width="12" height="20" rx="4" fill="#3B3247"/>` +
+        `<circle cx="30" cy="26" r="7" fill="#DCE3EC"/><circle cx="42" cy="20" r="5" fill="#DCE3EC"/>` +
+        `<circle cx="28" cy="88" r="8" fill="#3B3247"/><circle cx="62" cy="88" r="8" fill="#3B3247"/><circle cx="96" cy="88" r="8" fill="#3B3247"/>`
+      ) },
+      { ko: "비행기", en: "Airplane", art: svg(
+        `<path d="M20 60q0-9 12-10l58-4q14-1 18 6-4 7-18 6l-58-4q-12-1-12-9z" fill="#DCE3EC" transform="rotate(-8 60 60)"/>` +
+        `<path d="M54 54 38 22h12l26 30zM54 66 38 96h12l26-30z" fill="#3E7BD1"/>` +
+        `<path d="M84 56 96 40h8l-6 18z" fill="#2F66B5"/>` +
+        `<g fill="#3E7BD1"><circle cx="62" cy="58" r="4"/><circle cx="74" cy="57" r="4"/><circle cx="50" cy="59" r="4"/></g>`
+      ) },
+      { ko: "배", en: "Ship", art: svg(
+        `<path d="M58 22 60 66 30 66z" fill="#E2453F"/>` +
+        `<path d="M66 34 66 66 90 66z" fill="#F2B21E"/>` +
+        `<rect x="60" y="18" width="4" height="50" rx="2" fill="#7A5230"/>` +
+        `<path d="M16 70h88l-12 22H28z" fill="#8A5A34"/>` +
+        `<path d="M10 98q10-8 20 0t20 0 20 0 20 0 20 0" stroke="#3E7BD1" stroke-width="5" fill="none" stroke-linecap="round"/>`
+      ) },
+      { ko: "자전거", en: "Bicycle", art: svg(
+        `<circle cx="30" cy="76" r="22" fill="none" stroke="#3B3247" stroke-width="6"/>` +
+        `<circle cx="90" cy="76" r="22" fill="none" stroke="#3B3247" stroke-width="6"/>` +
+        `<path d="M30 76 54 40h18L90 76M54 76h30M54 40 46 76" stroke="#3E7BD1" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>` +
+        `<path d="M46 36h16" stroke="#E2453F" stroke-width="6" stroke-linecap="round"/>` +
+        `<path d="M72 34h12" stroke="#E2453F" stroke-width="6" stroke-linecap="round"/>` +
+        `<circle cx="54" cy="76" r="6" fill="#3B3247"/>`
+      ) },
+      { ko: "소방차", en: "Fire truck", art: svg(
+        `<rect x="10" y="52" width="60" height="34" rx="8" fill="#D8303F"/>` +
+        `<path d="M70 62h22l16 14v10H70z" fill="#E2453F"/>` +
+        `<rect x="76" y="66" width="18" height="12" rx="4" fill="#CFE6FA"/>` +
+        `<path d="M16 46 62 34" stroke="#9AA3B2" stroke-width="8" stroke-linecap="round"/>` +
+        `<path d="M18 40 60 28" stroke="#C9CFDA" stroke-width="3"/>` +
+        `<rect x="34" y="24" width="14" height="8" rx="4" fill="#3E7BD1"/>` +
+        `<circle cx="32" cy="90" r="11" fill="#3B3247"/><circle cx="88" cy="90" r="11" fill="#3B3247"/>` +
+        `<circle cx="32" cy="90" r="4.6" fill="#C9CFDA"/><circle cx="88" cy="90" r="4.6" fill="#C9CFDA"/>`
+      ) },
+      { ko: "헬리콥터", en: "Helicopter", art: svg(
+        `<path d="M10 26h100" stroke="#9AA3B2" stroke-width="6" stroke-linecap="round"/>` +
+        `<rect x="56" y="26" width="6" height="14" rx="3" fill="#7A828F"/>` +
+        `<path d="M30 60q0-20 26-20t26 16l20 10q6 3 6 9 0 11-12 11H44q-14 0-14-14z" fill="#3E7BD1"/>` +
+        `<path d="M96 66 112 56v22z" fill="#2F66B5"/>` +
+        `<circle cx="52" cy="58" r="11" fill="#CFE6FA"/>` +
+        `<path d="M40 86h48" stroke="#7A828F" stroke-width="6" stroke-linecap="round"/>` +
+        `<path d="M52 78v8M78 78v8" stroke="#7A828F" stroke-width="5" stroke-linecap="round"/>`
+      ) }
+    ]
+  },
+
+  {
+    id: "things", name: "생활용품", color: "#7A5BD6", soft: "#EBE4FB", deep: "#1E1830",
+    words: [
+      { ko: "컵", en: "Cup", art: svg(
+        `<path d="M86 48h10a14 14 0 0 1 0 28H86" fill="none" stroke="#7A5BD6" stroke-width="8" stroke-linecap="round"/>` +
+        `<path d="M26 36h60v40a22 22 0 0 1-22 22H48a22 22 0 0 1-22-22z" fill="#8A6BE0"/>` +
+        `<rect x="26" y="36" width="60" height="12" rx="6" fill="#B7A3F0"/>` +
+        `<path d="M46 20q-4 8 0 12M62 16q-5 10 0 16" stroke="#C9C1DE" stroke-width="4.6" fill="none" stroke-linecap="round"/>`
+      ) },
+      { ko: "숟가락", en: "Spoon", art: svg(
+        `<ellipse cx="60" cy="38" rx="20" ry="26" fill="#C9CFDA"/>` +
+        `<ellipse cx="60" cy="38" rx="13" ry="18" fill="#AEB6C4"/>` +
+        `<path d="M60 64v38" stroke="#C9CFDA" stroke-width="12" stroke-linecap="round"/>`
+      ) },
+      { ko: "칫솔", en: "Toothbrush", art: svg(
+        `<g transform="rotate(-24 60 60)">` +
+        `<rect x="16" y="56" width="86" height="14" rx="7" fill="#3E7BD1"/>` +
+        `<rect x="16" y="56" width="26" height="14" rx="7" fill="#7A5BD6"/>` +
+        `<rect x="70" y="50" width="32" height="22" rx="10" fill="#2F66B5"/>` +
+        `<g fill="#FBF6EC"><rect x="74" y="34" width="6" height="18" rx="3"/><rect x="83" y="32" width="6" height="20" rx="3"/><rect x="92" y="34" width="6" height="18" rx="3"/></g>` +
+        `<path d="M72 30q14-10 28-2" stroke="#5FC7E0" stroke-width="8" fill="none" stroke-linecap="round"/>` +
+        `</g>`
+      ) },
+      { ko: "신발", en: "Shoes", art: svg(
+        `<path d="M14 82q0-18 10-26 8-6 14 2l8 10 26 8q18 5 22 14v6a6 6 0 0 1-6 6H20a6 6 0 0 1-6-6z" fill="#E2453F"/>` +
+        `<path d="M14 88h80v6a6 6 0 0 1-6 6H20a6 6 0 0 1-6-6z" fill="#FBF6EC"/>` +
+        `<path d="M40 64 60 74M46 56 66 68" stroke="#FBF6EC" stroke-width="5" stroke-linecap="round"/>` +
+        `<path d="M96 62q8 4 8 12" stroke="#C9CFDA" stroke-width="5" fill="none" stroke-linecap="round"/>`
+      ) },
+      { ko: "모자", en: "Hat", art: svg(
+        `<path d="M22 66q0-34 38-34t38 34z" fill="#3E7BD1"/>` +
+        `<path d="M22 66h84q10 0 10 8t-10 8H22a8 8 0 0 1 0-16z" fill="#2F66B5"/>` +
+        `<circle cx="60" cy="32" r="6" fill="#F2B21E"/>` +
+        `<path d="M60 34v32" stroke="#2F66B5" stroke-width="3"/>`
+      ) },
+      { ko: "가방", en: "Bag", art: svg(
+        `<path d="M44 46V36a16 16 0 0 1 32 0v10" fill="none" stroke="#8A6BE0" stroke-width="8"/>` +
+        `<rect x="20" y="44" width="80" height="58" rx="14" fill="#7A5BD6"/>` +
+        `<rect x="20" y="64" width="80" height="14" fill="#5E43B0"/>` +
+        `<rect x="52" y="60" width="16" height="22" rx="5" fill="#F2B21E"/>`
+      ) },
+      { ko: "시계", en: "Clock", art: svg(
+        `<circle cx="60" cy="62" r="42" fill="#7A5BD6"/>` +
+        `<circle cx="60" cy="62" r="34" fill="#FBF6EC"/>` +
+        `<g stroke="#5E43B0" stroke-width="4" stroke-linecap="round"><path d="M60 32v6M60 86v6M30 62h6M84 62h6"/></g>` +
+        `<path d="M60 62V42M60 62l16 10" stroke="#3B3247" stroke-width="5" stroke-linecap="round"/>` +
+        `<circle cx="60" cy="62" r="4.6" fill="#E2453F"/>` +
+        `<path d="M40 22 30 14M80 22l10-8" stroke="#7A5BD6" stroke-width="7" stroke-linecap="round"/>`
+      ) },
+      { ko: "우산", en: "Umbrella", art: svg(
+        `<path d="M12 62q0-40 48-40t48 40q-12-10-24 0-12-10-24 0-12-10-24 0-12-10-24 0z" fill="#E2453F"/>` +
+        `<path d="M36 62q12-10 24 0V22q-18 0-24 40zM84 62q-12-10-24 0V22q18 0 24 40z" fill="#F2B21E"/>` +
+        `<path d="M60 62v30a10 10 0 0 1-20 0" fill="none" stroke="#7A5230" stroke-width="7" stroke-linecap="round"/>` +
+        `<path d="M60 22v-8" stroke="#7A5230" stroke-width="5" stroke-linecap="round"/>`
+      ) }
+    ]
+  },
+
+  {
+    id: "body", name: "몸", color: "#E06A96", soft: "#FBE3EC", deep: "#281821",
+    words: [
+      { ko: "눈", en: "Eyes", art: kidFace(
+        `<g><ellipse cx="44" cy="62" rx="13" ry="10" fill="#FFFFFF" stroke="${INK}" stroke-width="2.6"/>` +
+        `<circle cx="44" cy="62" r="6" fill="#4A3527"/><circle cx="46" cy="60" r="2" fill="#FFFFFF"/>` +
+        `<ellipse cx="76" cy="62" rx="13" ry="10" fill="#FFFFFF" stroke="${INK}" stroke-width="2.6"/>` +
+        `<circle cx="76" cy="62" r="6" fill="#4A3527"/><circle cx="78" cy="60" r="2" fill="#FFFFFF"/></g>`,
+        { eyes: true }
+      ) },
+      { ko: "코", en: "Nose", art: kidFace(
+        `<path d="M60 56q-7 16-9 20 3 4 9 4t9-4q-2-4-9-20z" fill="#E7A77E" stroke="${INK}" stroke-width="2.6" stroke-linejoin="round"/>`,
+        { nose: true }
+      ) },
+      { ko: "입", en: "Mouth", art: kidFace(
+        `<path d="M40 80q20-8 40 0-6 18-20 18T40 80z" fill="#C7455F" stroke="${INK}" stroke-width="2.6" stroke-linejoin="round"/>` +
+        `<path d="M46 86q14 10 28 0 0 12-14 12T46 86z" fill="#EB8AA0"/>`,
+        { mouth: true }
+      ) },
+      { ko: "귀", en: "Ears", art: kidFace(
+        `<ellipse cx="20" cy="68" rx="11" ry="15" fill="#EBC09B" stroke="${INK}" stroke-width="2.6"/>` +
+        `<path d="M20 62q6 4 0 12" stroke="${INK}" stroke-width="2.4" fill="none" stroke-linecap="round"/>` +
+        `<ellipse cx="100" cy="68" rx="11" ry="15" fill="#EBC09B" stroke="${INK}" stroke-width="2.6"/>` +
+        `<path d="M100 62q-6 4 0 12" stroke="${INK}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`,
+        { ears: true }
+      ) },
+      { ko: "이빨", en: "Teeth", art: svg(
+        `<path d="M14 54q46-26 92 0-14 42-46 42T14 54z" fill="#C7455F"/>` +
+        `<path d="M24 56q36-18 72 0-12 30-36 30T24 56z" fill="#FBF6EC"/>` +
+        `<g stroke="#D9D2C4" stroke-width="2.4"><path d="M42 50v10M60 48v12M78 50v10M32 62h56"/></g>` +
+        `<path d="M46 74q14 10 28 0-6 12-14 12t-14-12z" fill="#EB8AA0"/>`
+      ) },
+      { ko: "손", en: "Hand", art: svg(
+        `<path d="M40 60V30a8 8 0 0 1 16 0v26M56 56V22a8 8 0 0 1 16 0v34M72 58V30a8 8 0 0 1 16 0v30" fill="#F3CFAE" stroke="${INK}" stroke-width="2.6" stroke-linejoin="round"/>` +
+        `<path d="M40 60V44a8 8 0 0 0-16 0v10q0 12 6 22l8 14a14 14 0 0 0 12 6h22a16 16 0 0 0 16-16V60H40z" fill="#F3CFAE" stroke="${INK}" stroke-width="2.6" stroke-linejoin="round"/>`
+      ) },
+      { ko: "발", en: "Foot", art: svg(
+        `<path d="M36 34q24-10 40 6 12 12 10 34-2 20-22 24-22 4-30-12-8-16-4-34 2-12 6-18z" fill="#F3CFAE" stroke="${INK}" stroke-width="2.6"/>` +
+        `<g fill="#EBC09B" stroke="${INK}" stroke-width="2.4">` +
+        `<ellipse cx="44" cy="30" rx="9" ry="8"/><ellipse cx="62" cy="24" rx="7" ry="6.4"/>` +
+        `<ellipse cx="76" cy="26" rx="6" ry="5.6"/><ellipse cx="87" cy="32" rx="5.4" ry="5"/><ellipse cx="95" cy="40" rx="5" ry="4.6"/></g>`
+      ) },
+      { ko: "머리카락", en: "Hair", art: kidFace(
+        `<path d="M22 60a38 38 0 0 1 76 0q2-30-38-30T22 60z" fill="#3A2820"/>` +
+        `<path d="M30 40q10-12 30-12t30 12q-6-20-30-20T30 40z" fill="#5C4232"/>` +
+        `<path d="M96 46q10 6 8 20M24 46q-10 6-8 20" stroke="#3A2820" stroke-width="6" fill="none" stroke-linecap="round"/>`
+      ) }
+    ]
+  },
+  {
+    id: "nature", name: "자연", color: "#2FA3B5", soft: "#DCF0F3", deep: "#142228",
+    words: [
+      { ko: "해", en: "Sun", art: svg(
+        `<g stroke="#F2B21E" stroke-width="7" stroke-linecap="round">` +
+        `<path d="M60 8v12M60 100v12M8 60h12M100 60h12M23 23l9 9M88 88l9 9M97 23l-9 9M32 88l-9 9"/></g>` +
+        `<circle cx="60" cy="60" r="30" fill="#F6C932"/>` +
+        face(50, 70, 55, 4.4, 68, 9)
+      ) },
+      { ko: "달", en: "Moon", art: svg(
+        `<path d="M78 16a46 46 0 1 0 22 62A38 38 0 0 1 78 16z" fill="#F6D96A"/>` +
+        `<g fill="#E4C34C"><circle cx="52" cy="52" r="7"/><circle cx="40" cy="76" r="5"/><circle cx="62" cy="82" r="4"/></g>` +
+        `<path d="M96 24l3 7 7 3-7 3-3 7-3-7-7-3 7-3z" fill="#FBF6EC"/>`
+      ) },
+      { ko: "별", en: "Star", art: svg(
+        `<path d="M60 12 74 46l37 3-28 24 9 36-32-19-32 19 9-36L9 49l37-3z" fill="#F6C932"/>` +
+        face(50, 70, 56, 4.2, 68, 8)
+      ) },
+      { ko: "구름", en: "Cloud", art: svg(
+        `<g fill="#FBFCFE" stroke="#C6D6E4" stroke-width="3">` +
+        `<circle cx="42" cy="62" r="20"/><circle cx="66" cy="50" r="24"/><circle cx="86" cy="66" r="18"/>` +
+        `<rect x="30" y="66" width="68" height="22" rx="11"/></g>` +
+        `<path d="M32 78h60" stroke="#FBFCFE" stroke-width="10" stroke-linecap="round"/>`
+      ) },
+      { ko: "비", en: "Rain", art: svg(
+        `<g fill="#C6D6E4"><circle cx="42" cy="42" r="18"/><circle cx="66" cy="32" r="22"/><circle cx="84" cy="46" r="16"/>` +
+        `<rect x="28" y="44" width="70" height="20" rx="10"/></g>` +
+        `<g fill="#3E9AD1"><path d="M40 74q7 9 7 13a7 7 0 0 1-14 0q0-4 7-13z"/>` +
+        `<path d="M62 82q7 9 7 13a7 7 0 0 1-14 0q0-4 7-13z"/>` +
+        `<path d="M84 74q7 9 7 13a7 7 0 0 1-14 0q0-4 7-13z"/></g>`
+      ) },
+      { ko: "무지개", en: "Rainbow", art: svg(
+        `<g fill="none" stroke-width="10" stroke-linecap="round">` +
+        `<path d="M12 92a48 48 0 0 1 96 0" stroke="#E2453F"/>` +
+        `<path d="M24 92a36 36 0 0 1 72 0" stroke="#F2B21E"/>` +
+        `<path d="M36 92a24 24 0 0 1 48 0" stroke="#4FA24A"/>` +
+        `<path d="M48 92a12 12 0 0 1 24 0" stroke="#3E7BD1"/></g>` +
+        `<g fill="#FBFCFE"><circle cx="16" cy="94" r="10"/><circle cx="104" cy="94" r="10"/></g>`
+      ) },
+      { ko: "나무", en: "Tree", art: svg(
+        `<rect x="52" y="66" width="16" height="42" rx="6" fill="#8A5A34"/>` +
+        `<path d="M60 84 44 72M60 94l16-12" stroke="#8A5A34" stroke-width="7" stroke-linecap="round"/>` +
+        `<g fill="#3E9A4E"><circle cx="40" cy="52" r="22"/><circle cx="80" cy="52" r="22"/><circle cx="60" cy="34" r="24"/><circle cx="60" cy="58" r="22"/></g>` +
+        `<g fill="#E2453F"><circle cx="44" cy="40" r="5"/><circle cx="76" cy="36" r="5"/><circle cx="62" cy="62" r="5"/></g>`
+      ) },
+      { ko: "꽃", en: "Flower", art: svg(
+        `<path d="M60 66v40" stroke="#4C9B3C" stroke-width="7" stroke-linecap="round"/>` +
+        `<path d="M60 86q-16-2-20-14 16-2 20 14zM60 96q16-2 20-14-16-2-20 14z" fill="#4C9B3C"/>` +
+        `<g fill="#E8659A">` +
+        `<ellipse cx="60" cy="26" rx="14" ry="18"/><ellipse cx="60" cy="66" rx="14" ry="18"/>` +
+        `<ellipse cx="40" cy="46" rx="18" ry="14"/><ellipse cx="80" cy="46" rx="18" ry="14"/>` +
+        `<ellipse cx="46" cy="32" rx="13" ry="16" transform="rotate(-45 46 32)"/>` +
+        `<ellipse cx="74" cy="32" rx="13" ry="16" transform="rotate(45 74 32)"/></g>` +
+        `<circle cx="60" cy="46" r="13" fill="#F6C932"/>`
+      ) }
+    ]
+  },
+
+  {
+    id: "colors", name: "색깔", color: "#D8A020", soft: "#FBF0D5", deep: "#241E10",
+    icon: svg(`<circle cx="44" cy="44" r="28" fill="#E2453F"/><circle cx="78" cy="52" r="26" fill="#F6C932"/>` +
+      `<circle cx="52" cy="80" r="26" fill="#3E7BD1"/><circle cx="84" cy="86" r="22" fill="#3FA05C"/>`),
+    words: [
+      { ko: "빨강", en: "Red", art: colorArt("#E2453F") },
+      { ko: "주황", en: "Orange", art: colorArt("#F2842B") },
+      { ko: "노랑", en: "Yellow", art: colorArt("#F6C932") },
+      { ko: "초록", en: "Green", art: colorArt("#3FA05C") },
+      { ko: "파랑", en: "Blue", art: colorArt("#3E7BD1") },
+      { ko: "보라", en: "Purple", art: colorArt("#7A5BD6") },
+      { ko: "분홍", en: "Pink", art: colorArt("#F09AB8") },
+      { ko: "하양", en: "White", art: colorArt("#FFFFFF", "#D6CFC2") }
+    ]
+  },
+
+  {
+    id: "numbers", name: "숫자", color: "#5B6B7D", soft: "#E7ECF1", deep: "#191E23",
+    words: [
+      ["하나", "One", 1], ["둘", "Two", 2], ["셋", "Three", 3], ["넷", "Four", 4], ["다섯", "Five", 5],
+      ["여섯", "Six", 6], ["일곱", "Seven", 7], ["여덟", "Eight", 8], ["아홉", "Nine", 9], ["열", "Ten", 10]
+    ].map(([ko, en, n]) => ({ ko: ko, en: en, art: numberArt(n) }))
+  },
+
+  {
+    id: "shapes", name: "모양", color: "#6B8F2E", soft: "#EEF4DE", deep: "#1C2215",
+    icon: svg(`<circle cx="38" cy="38" r="24" fill="#E2453F"/><rect x="66" y="16" width="44" height="44" rx="6" fill="#F6C932"/>` +
+      `<path d="M38 66 66 108H10z" fill="#3E7BD1"/><path d="M86 66 110 90 86 114 62 90z" fill="#7A5BD6"/>`),
+    words: [
+      { ko: "동그라미", en: "Circle", art: svg(`<circle cx="60" cy="60" r="44" fill="#E2453F"/>`) },
+      { ko: "세모", en: "Triangle", art: svg(`<path d="M60 14 108 98H12z" fill="#3E7BD1" stroke-linejoin="round"/>`) },
+      { ko: "네모", en: "Square", art: svg(`<rect x="16" y="16" width="88" height="88" rx="8" fill="#F6C932"/>`) },
+      { ko: "하트", en: "Heart", art: svg(`<path d="M60 102C24 78 12 62 12 44a26 26 0 0 1 48-14 26 26 0 0 1 48 14c0 18-12 34-48 58z" fill="#E8659A"/>`) },
+      { ko: "마름모", en: "Diamond", art: svg(`<path d="M60 12 104 60 60 108 16 60z" fill="#7A5BD6" stroke-linejoin="round"/>`) }
+    ]
+  }
+];
+
+/* ────────────────────────────────────────────────────────────
+   설정
+   ──────────────────────────────────────────────────────────── */
+const SETTINGS_KEY = "wordcards.settings";
+const defaults = { speak: true, rate: 0.85, english: true, autoMs: 5000, theme: "auto" };
+let settings = Object.assign({}, defaults);
+try {
+  const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}");
+  if (saved && typeof saved === "object") settings = Object.assign(settings, saved);
+} catch (e) { /* 저장된 값이 깨졌으면 기본값으로 */ }
+
+function saveSettings() {
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (e) { /* 비공개 모드 등 */ }
+}
+const darkMedia = window.matchMedia("(prefers-color-scheme: dark)");
+function isDark() {
+  if (settings.theme === "dark") return true;
+  if (settings.theme === "light") return false;
+  return darkMedia.matches;
+}
+function applyTheme() {
+  if (settings.theme === "auto") document.documentElement.removeAttribute("data-theme");
+  else document.documentElement.setAttribute("data-theme", settings.theme);
+  paintDeck();
+}
+/** 카드 화면 배경색을 카테고리 색으로 물들인다 — 어두운 테마에서는 어두운 쪽으로 */
+function paintDeck() {
+  const bg = current ? (isDark() ? current.deep : current.soft) : (isDark() ? "#171420" : "#FFF6EA");
+  document.getElementById("deck").style.setProperty("--deck-bg", bg);
+  document.querySelector('meta[name="theme-color"]').setAttribute("content", bg);
+}
+darkMedia.addEventListener("change", () => { if (settings.theme === "auto") paintDeck(); });
+
+/* ────────────────────────────────────────────────────────────
+   소리 — 기기 음성 합성(TTS). 권한이 필요 없고 파일도 없다.
+   ──────────────────────────────────────────────────────────── */
+const tts = window.speechSynthesis || null;
+let koVoice = null;
+let voiceChecked = false;
+
+function pickVoice() {
+  if (!tts) return;
+  const voices = tts.getVoices();
+  if (!voices.length) return;
+  koVoice = voices.find((v) => v.lang && v.lang.toLowerCase().replace("_", "-") === "ko-kr")
+    || voices.find((v) => v.lang && v.lang.toLowerCase().startsWith("ko"))
+    || null;
+  voiceChecked = true;
+  updateVoiceState();
+}
+if (tts) {
+  pickVoice();
+  tts.addEventListener("voiceschanged", pickVoice);
+  // 일부 기기는 voiceschanged 가 늦게 오거나 오지 않는다
+  setTimeout(pickVoice, 1200);
+}
+
+function updateVoiceState() {
+  const el = document.getElementById("voiceState");
+  if (!el) return;
+  if (!tts) el.textContent = "이 기기에서는 소리 읽기를 쓸 수 없어요";
+  else if (voiceChecked && !koVoice) el.textContent = "한국어 음성이 없어 기본 음성으로 읽어요";
+  else el.textContent = "기기 음성으로 단어를 읽어요";
+}
+
+function speak(text) {
+  if (!settings.speak || !tts) return;
+  try {
+    tts.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "ko-KR";
+    u.rate = settings.rate;
+    u.pitch = 1.15;           // 아이 대상이라 조금 밝게
+    if (koVoice) u.voice = koVoice;
+    const words = document.getElementById("card");
+    u.onstart = () => words.classList.add("speaking");
+    u.onend = u.onerror = () => words.classList.remove("speaking");
+    tts.speak(u);
+  } catch (e) { /* 음성이 없으면 조용히 넘어간다 */ }
+}
+
+/* ────────────────────────────────────────────────────────────
+   화면
+   ──────────────────────────────────────────────────────────── */
+const $ = (id) => document.getElementById(id);
+const homeEl = $("home"), deckEl = $("deck"), settingsEl = $("settings");
+
+let enteredFromHome = false;   // 표지에서 눌러 들어왔는지 (뒤로가기 처리용)
+let current = null;     // 현재 카테고리
+let order = [];         // 보여줄 순서(섞기 반영)
+let index = 0;
+let autoTimer = null;
+
+function buildHome() {
+  const frag = document.createDocumentFragment();
+  CATEGORIES.forEach((cat) => {
+    const b = document.createElement("button");
+    b.className = "tile";
+    b.style.setProperty("--tile-bg", cat.soft);
+    b.style.borderColor = cat.color;
+    b.innerHTML =
+      '<div class="tile-art">' + (cat.icon || cat.words[0].art) + "</div>" +
+      '<div class="tile-name">' + cat.name + "</div>" +
+      '<div class="tile-count">' + cat.words.length + "장</div>";
+    b.addEventListener("click", () => { enteredFromHome = true; location.hash = cat.id; });
+    frag.appendChild(b);
+  });
+  $("tiles").replaceChildren(frag);
+}
+
+function openCategory(id, startIndex) {
+  const cat = CATEGORIES.find((c) => c.id === id);
+  if (!cat) return;
+  current = cat;
+  order = cat.words.map((_, i) => i);
+  index = Math.min(Math.max(startIndex || 0, 0), order.length - 1);
+  paintDeck();
+  $("deckTitle").textContent = cat.name;
+  homeEl.hidden = true;
+  deckEl.hidden = false;
+  render(false);
+}
+
+function goHome() {
+  stopAuto();
+  setLocked(false);
+  if (tts) tts.cancel();
+  current = null;
+  deckEl.hidden = true;
+  homeEl.hidden = false;
+  paintDeck();
+}
+
+/* 주소의 해시가 곧 현재 화면이다. 이렇게 두면 폰의 뒤로가기로 표지에 돌아오고,
+   #animals 같은 바로가기 링크로 곧장 들어올 수도 있다. */
+function route() {
+  const h = decodeURIComponent(location.hash.replace(/^#/, "")).split("/");
+  const cat = CATEGORIES.find((c) => c.id === h[0]);
+  if (cat) openCategory(cat.id, Number(h[1]) || 0);
+  else goHome();
+}
+window.addEventListener("hashchange", route);
+
+function render(withSound) {
+  if (!current) return;
+  const w = current.words[order[index]];
+  $("cardArt").innerHTML = w.art;
+  $("wordKo").textContent = w.ko;
+  const en = $("wordEn");
+  en.textContent = w.en;
+  en.hidden = !settings.english;
+  $("progressText").textContent = (index + 1) + " / " + order.length;
+  $("progressFill").style.width = ((index + 1) / order.length * 100) + "%";
+  const card = $("card");
+  card.classList.remove("pop");
+  void card.offsetWidth;   // 애니메이션 재시작
+  card.classList.add("pop");
+  if (withSound !== false) speak(w.ko);
+}
+
+function move(step) {
+  if (!current) return;
+  index = (index + step + order.length) % order.length;
+  render(true);
+  if (autoTimer) restartAuto();   // 손으로 넘기면 자동 넘김 시계도 다시 센다
+}
+
+function shuffle() {
+  if (!current) return;
+  const nowId = order[index];
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  index = Math.max(0, order.indexOf(nowId));
+  index = (index + 1) % order.length;   // 섞었으니 다음 장부터 보여준다
+  render(true);
+}
+
+/* 자동 넘김 */
+function startAuto() {
+  stopAuto();
+  autoTimer = setInterval(() => move(1), settings.autoMs);
+  $("btnAuto").classList.add("on");
+  $("btnAuto").setAttribute("aria-pressed", "true");
+}
+function stopAuto() {
+  if (autoTimer) clearInterval(autoTimer);
+  autoTimer = null;
+  $("btnAuto").classList.remove("on");
+  $("btnAuto").setAttribute("aria-pressed", "false");
+}
+function restartAuto() { if (autoTimer) { clearInterval(autoTimer); autoTimer = setInterval(() => move(1), settings.autoMs); } }
+
+/* 아기 잠금 — 누르고 있어야 풀린다 */
+let locked = false, holdTimer = null, holdStart = 0, holdDone = false;
+function setLocked(v) {
+  locked = v;
+  document.body.classList.toggle("locked", v);
+  const b = $("btnLock");
+  b.classList.toggle("on", v);
+  b.setAttribute("aria-pressed", v ? "true" : "false");
+  b.setAttribute("aria-label", v ? "잠금 풀기 (길게 누르기)" : "아기 잠금");
+  if (!v) $("btnLock").querySelector(".hold").style.height = "0";
+}
+function holdBegin(e) {
+  if (!locked) return;
+  e.preventDefault();
+  holdStart = Date.now();
+  holdDone = false;
+  const fill = $("btnLock").querySelector(".hold");
+  holdTimer = setInterval(() => {
+    const p = Math.min((Date.now() - holdStart) / 2000, 1);
+    fill.style.height = (p * 100) + "%";
+    if (p >= 1) { holdEnd(); holdDone = true; setLocked(false); }
+  }, 50);
+  showLockHint();
+}
+function holdEnd() {
+  if (holdTimer) clearInterval(holdTimer);
+  holdTimer = null;
+  $("btnLock").querySelector(".hold").style.height = "0";
+}
+let hintTimer = null;
+function showLockHint() {
+  const h = $("lockHint");
+  h.classList.add("show");
+  clearTimeout(hintTimer);
+  hintTimer = setTimeout(() => h.classList.remove("show"), 2200);
+}
+
+/* ────────────────────────────────────────────────────────────
+   입력 — 탭·스와이프·키보드
+   ──────────────────────────────────────────────────────────── */
+$("card").addEventListener("click", () => {
+  if (!current) return;
+  speak(current.words[order[index]].ko);
+});
+
+let sx = 0, sy = 0, swiping = false;
+const stage = $("stage");
+stage.addEventListener("pointerdown", (e) => { sx = e.clientX; sy = e.clientY; swiping = true; });
+stage.addEventListener("pointerup", (e) => {
+  if (!swiping) return;
+  swiping = false;
+  const dx = e.clientX - sx, dy = e.clientY - sy;
+  if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.4) {
+    e.preventDefault();
+    move(dx < 0 ? 1 : -1);
+  }
+});
+stage.addEventListener("pointercancel", () => { swiping = false; });
+
+document.addEventListener("keydown", (e) => {
+  if (!settingsEl.hidden) { if (e.key === "Escape") closeSettings(); return; }
+  if (deckEl.hidden) return;
+  if (e.key === "ArrowRight") move(1);
+  else if (e.key === "ArrowLeft") move(-1);
+  else if (e.key === "Escape" && !locked) backToHome();
+});
+
+/* 뒤로 — 표지에서 들어왔으면 방문 기록을 한 칸 되돌리고(중복 기록이 쌓이지 않게),
+   바로가기로 곧장 들어왔으면 해시만 비운다(뒤로 갔다가 앱 밖으로 나가지 않게) */
+function backToHome() {
+  if (enteredFromHome) { enteredFromHome = false; history.back(); }
+  else location.hash = "";
+}
+
+$("btnPrev").addEventListener("click", () => move(-1));
+$("btnNext").addEventListener("click", () => move(1));
+$("btnBack").addEventListener("click", backToHome);
+$("btnShuffle").addEventListener("click", shuffle);
+$("btnAuto").addEventListener("click", () => (autoTimer ? stopAuto() : startAuto()));
+$("btnLock").addEventListener("click", () => {
+  // 길게 눌러 방금 잠금을 푼 손짓이면, 이어서 오는 click 으로 다시 잠기지 않게 한다
+  if (holdDone) { holdDone = false; return; }
+  if (!locked) setLocked(true); else showLockHint();
+});
+["pointerdown"].forEach((t) => $("btnLock").addEventListener(t, holdBegin));
+["pointerup", "pointerleave", "pointercancel"].forEach((t) => $("btnLock").addEventListener(t, holdEnd));
+
+/* ────────────────────────────────────────────────────────────
+   설정 화면
+   ──────────────────────────────────────────────────────────── */
+function openSettings() { settingsEl.hidden = false; syncSettingsUI(); }
+function closeSettings() { settingsEl.hidden = true; }
+$("btnSettings").addEventListener("click", openSettings);
+$("btnCloseSettings").addEventListener("click", closeSettings);
+settingsEl.addEventListener("click", (e) => { if (e.target === settingsEl) closeSettings(); });
+
+function bindSwitch(el, key, after) {
+  el.addEventListener("click", () => {
+    settings[key] = !settings[key];
+    saveSettings();
+    syncSettingsUI();
+    if (after) after();
+  });
+}
+function bindSeg(el, key, cast, after) {
+  el.addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-v]");
+    if (!b) return;
+    settings[key] = cast(b.dataset.v);
+    saveSettings();
+    syncSettingsUI();
+    if (after) after();
+  });
+}
+bindSwitch($("swSpeak"), "speak", () => { if (!settings.speak && tts) tts.cancel(); });
+bindSwitch($("swEnglish"), "english", () => render(false));
+bindSeg($("segRate"), "rate", Number);
+bindSeg($("segAuto"), "autoMs", Number, restartAuto);
+bindSeg($("segTheme"), "theme", String, applyTheme);
+
+function syncSettingsUI() {
+  $("swSpeak").setAttribute("aria-pressed", settings.speak ? "true" : "false");
+  $("swEnglish").setAttribute("aria-pressed", settings.english ? "true" : "false");
+  const seg = (el, val) => el.querySelectorAll("button[data-v]").forEach((b) => {
+    b.setAttribute("aria-pressed", String(b.dataset.v) === String(val) ? "true" : "false");
+  });
+  seg($("segRate"), settings.rate);
+  seg($("segAuto"), settings.autoMs);
+  seg($("segTheme"), settings.theme);
+  updateVoiceState();
+}
+
+/* ────────────────────────────────────────────────────────────
+   시작
+   ──────────────────────────────────────────────────────────── */
+applyTheme();
+$("verText").textContent = APP_VERSION;
+buildHome();
+syncSettingsUI();
+
+// #animals, #numbers/9 처럼 카테고리·장수로 바로 들어갈 수 있다 (바로가기·스크린샷용)
+route();
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
+</script>
+</body>
+</html>

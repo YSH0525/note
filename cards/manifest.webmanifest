@@ -1,0 +1,37 @@
+{
+  "name": "아기 단어카드",
+  "short_name": "단어카드",
+  "description": "아기와 함께 보는 단어카드 — 동물·과일·채소·탈것·생활용품·몸·자연·색깔·숫자·모양. 광고 없음, 오프라인 동작. Yoonque Labs",
+  "lang": "ko",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#FFF6EA",
+  "theme_color": "#FFF6EA",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "동물",
+      "url": "./index.html#animals",
+      "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "과일",
+      "url": "./index.html#fruits",
+      "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "숫자",
+      "url": "./index.html#numbers",
+      "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    }
+  ]
+}

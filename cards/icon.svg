@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="아기 단어카드">
+  <rect width="512" height="512" rx="114" fill="#FFF6EA"/>
+  <g transform="rotate(-8 256 272)">
+    <rect x="86" y="132" width="230" height="272" rx="46" fill="#FFC44D"/>
+  </g>
+  <g transform="rotate(7 256 272)">
+    <rect x="186" y="110" width="240" height="282" rx="48" fill="#F2792B"/>
+    <circle cx="266" cy="212" r="26" fill="#FFF3E0"/>
+    <circle cx="352" cy="212" r="26" fill="#FFF3E0"/>
+    <path d="M258 274q52 54 104 0" stroke="#FFF3E0" stroke-width="26" fill="none" stroke-linecap="round"/>
+  </g>
+</svg>

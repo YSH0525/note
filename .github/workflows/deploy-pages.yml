@@ -1,4 +1,4 @@
-name: Deploy FoldNote to GitHub Pages
+name: Deploy to GitHub Pages
 
 on:
   push:
@@ -29,10 +29,18 @@ jobs:
         with:
           enablement: true
 
-      - name: Upload app directory
+      # 폴드노트는 지금까지처럼 사이트 루트에, 단어카드는 /cards/ 에 올린다.
+      # (루트를 바꾸면 개인정보처리방침 주소가 깨지므로 app/ 위치는 건드리지 않는다)
+      - name: Assemble site
+        run: |
+          mkdir -p _site/cards
+          cp app/* _site/
+          cp cards/* _site/cards/
+
+      - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: app
+          path: _site
 
       - name: Deploy to GitHub Pages
         id: deployment
