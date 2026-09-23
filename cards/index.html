@@ -163,6 +163,16 @@ button {
   background: var(--tile-bg, var(--accent-soft));
 }
 .tile-art svg { width: 78%; height: 78%; }
+.tile-art { position: relative; overflow: hidden; }
+/* 사진은 그림(SVG) 자리에 그대로 겹쳐 놓는다. 파일이 없으면 붙지 않으므로 그림이 남는다 */
+.photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: inherit;
+}
 .tile-name {
   font-size: clamp(16px, 4vw, 19px);
   font-weight: 800;
@@ -617,7 +627,7 @@ const colorArt = (fill, ring) => svg(
 
 const CATEGORIES = [
   {
-    id: "animals", name: "동물", color: "#E07B3C", soft: "#FDEBDB", deep: "#241B14",
+    id: "animals", name: "동물", color: "#E07B3C", soft: "#FDEBDB", deep: "#241B14", photos: true,
     words: [
       { ko: "강아지", en: "Dog", art: svg(
         `<ellipse cx="26" cy="68" rx="12" ry="27" fill="#8E5A34" transform="rotate(-10 26 68)"/>` +
@@ -694,7 +704,7 @@ const CATEGORIES = [
   },
 
   {
-    id: "fruits", name: "과일", color: "#E2453F", soft: "#FCE5E2", deep: "#271719",
+    id: "fruits", name: "과일", color: "#E2453F", soft: "#FCE5E2", deep: "#271719", photos: true,
     words: [
       { ko: "사과", en: "Apple", art: svg(
         `<rect x="57" y="20" width="6" height="16" rx="3" fill="#7A5230"/>` +
@@ -758,7 +768,7 @@ const CATEGORIES = [
   },
 
   {
-    id: "vegetables", name: "채소", color: "#3FA05C", soft: "#E1F2E6", deep: "#15231A",
+    id: "vegetables", name: "채소", color: "#3FA05C", soft: "#E1F2E6", deep: "#15231A", photos: true,
     words: [
       { ko: "당근", en: "Carrot", art: svg(
         `<path d="M60 36q-9-14-24-16 3 14 14 20zM60 36q9-14 24-16-3 14-14 20zM60 34q0-16-8-24-8 12-4 24z" fill="#4C9B3C"/>` +
@@ -807,7 +817,7 @@ const CATEGORIES = [
     ]
   },
   {
-    id: "vehicles", name: "탈것", color: "#3E7BD1", soft: "#DFEAFB", deep: "#161E2A",
+    id: "vehicles", name: "탈것", color: "#3E7BD1", soft: "#DFEAFB", deep: "#161E2A", photos: true,
     words: [
       { ko: "자동차", en: "Car", art: svg(
         `<path d="M22 72q4-22 10-26 8-6 28-6t28 6q6 4 10 26z" fill="#E2453F"/>` +
@@ -881,7 +891,7 @@ const CATEGORIES = [
   },
 
   {
-    id: "things", name: "생활용품", color: "#7A5BD6", soft: "#EBE4FB", deep: "#1E1830",
+    id: "things", name: "생활용품", color: "#7A5BD6", soft: "#EBE4FB", deep: "#1E1830", photos: true,
     words: [
       { ko: "컵", en: "Cup", art: svg(
         `<path d="M86 48h10a14 14 0 0 1 0 28H86" fill="none" stroke="#7A5BD6" stroke-width="8" stroke-linecap="round"/>` +
@@ -939,7 +949,7 @@ const CATEGORIES = [
   },
 
   {
-    id: "body", name: "몸", color: "#E06A96", soft: "#FBE3EC", deep: "#281821",
+    id: "body", name: "몸", color: "#E06A96", soft: "#FBE3EC", deep: "#281821", photos: true,
     words: [
       { ko: "눈", en: "Eyes", art: kidFace(
         `<g><ellipse cx="44" cy="62" rx="13" ry="10" fill="#FFFFFF" stroke="${INK}" stroke-width="2.6"/>` +
@@ -988,7 +998,7 @@ const CATEGORIES = [
     ]
   },
   {
-    id: "nature", name: "자연", color: "#2FA3B5", soft: "#DCF0F3", deep: "#142228",
+    id: "nature", name: "자연", color: "#2FA3B5", soft: "#DCF0F3", deep: "#142228", photos: true,
     words: [
       { ko: "해", en: "Sun", art: svg(
         `<g stroke="#F2B21E" stroke-width="7" stroke-linecap="round">` +
@@ -1168,6 +1178,31 @@ function speak(text) {
    화면
    ──────────────────────────────────────────────────────────── */
 const $ = (id) => document.getElementById(id);
+
+/* 그림 — 기본은 코드로 그린 SVG, 같은 이름의 사진 파일이 있으면 그쪽이 덮는다.
+   파일명은 카테고리와 영어 단어에서 그대로 만든다 (animals-dog.webp 처럼).
+   없으면 load 가 오지 않아 아무 일도 일어나지 않는다 — 그래서 두 방식이 섞여 있어도 된다. */
+const imgFile = (cat, w) => cat.id + "-" + w.en.toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".webp";
+/* img/ 에 실제로 들어 있는 파일 목록. 없는 파일을 불러 404 를 내지 않으려고 적어 둔다.
+   고칠 때는 손으로 쓰지 말고 `node tools/cards-photos.mjs` — 폴더를 훑어 이 줄을 다시 쓴다.
+   (어긋나면 tools/cards-check.mjs 가 잡는다) */
+const PHOTOS = new Set([]);
+function paintArt(box, cat, w, art) {
+  box.innerHTML = art || w.art;
+  if (!cat.photos || !PHOTOS.has(imgFile(cat, w))) return;
+  const img = new Image();
+  img.className = "photo";
+  img.alt = "";
+  img.decoding = "async";
+  img.addEventListener("load", () => {
+    if (box.dataset.key !== cat.id + "/" + w.ko) return;   // 그 사이 카드가 넘어갔으면 버린다
+    const s = box.querySelector("svg");
+    if (s) s.hidden = true;
+    box.appendChild(img);
+  });
+  box.dataset.key = cat.id + "/" + w.ko;
+  img.src = "img/" + imgFile(cat, w);
+}
 const homeEl = $("home"), deckEl = $("deck"), settingsEl = $("settings");
 
 let enteredFromHome = false;   // 표지에서 눌러 들어왔는지 (뒤로가기 처리용)
@@ -1184,9 +1219,10 @@ function buildHome() {
     b.style.setProperty("--tile-bg", cat.soft);
     b.style.borderColor = cat.color;
     b.innerHTML =
-      '<div class="tile-art">' + (cat.icon || cat.words[0].art) + "</div>" +
+      '<div class="tile-art"></div>' +
       '<div class="tile-name">' + cat.name + "</div>" +
       '<div class="tile-count">' + cat.words.length + "장</div>";
+    paintArt(b.querySelector(".tile-art"), cat.icon ? { id: cat.id } : cat, cat.words[0], cat.icon);
     b.addEventListener("click", () => { enteredFromHome = true; location.hash = cat.id; });
     frag.appendChild(b);
   });
@@ -1229,7 +1265,7 @@ window.addEventListener("hashchange", route);
 function render(withSound) {
   if (!current) return;
   const w = current.words[order[index]];
-  $("cardArt").innerHTML = w.art;
+  paintArt($("cardArt"), current, w);
   $("wordKo").textContent = w.ko;
   const en = $("wordEn");
   en.textContent = w.en;
@@ -1423,6 +1459,28 @@ route();
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 }
+
+/* 사진을 미리 받아 둔다 — 비행기 모드에서도 전부 나오게. 아직 없는 파일은 조용히 건너뛴다.
+   한 번에 하나씩 받아서 앱을 처음 켠 순간에 네트워크를 몰아치지 않게 한다. */
+function warmPhotos() {
+  if (!("caches" in window)) return;
+  const urls = CATEGORIES.filter((c) => c.photos)
+    .flatMap((c) => c.words.map((w) => imgFile(c, w)))
+    .filter((f) => PHOTOS.has(f))
+    .map((f) => "img/" + f);
+  if (!urls.length) return;
+  caches.open("wordcards-v1").then((cache) => {
+    let i = 0;
+    const next = () => {
+      if (i >= urls.length) return;
+      cache.match(urls[i]).then((hit) => (hit ? Promise.resolve() : cache.add(urls[i]).catch(() => {})))
+        .then(() => { i++; next(); });
+    };
+    next();
+  }).catch(() => {});
+}
+if ("requestIdleCallback" in window) requestIdleCallback(warmPhotos, { timeout: 4000 });
+else setTimeout(warmPhotos, 3000);
 </script>
 </body>
 </html>

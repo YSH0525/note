@@ -74,6 +74,19 @@ const dupes = await page.evaluate(() => {
 });
 ok("같은 단어 중복 없음", dupes.length === 0, dupes.join(","));
 
+/* 2-1) 사진 목록이 실제 폴더와 맞는가 — 어긋나면 사진이 조용히 안 보인다 */
+const imgDir = path.join(root, "cards", "img");
+const onDisk = (existsSync(imgDir) ? readdirSync(imgDir) : []).filter((f) => /\.webp$/i.test(f)).sort();
+const listed = (await page.evaluate(() => [...PHOTOS])).sort();
+ok("사진 목록이 폴더와 일치 (node tools/cards-photos.mjs)",
+   JSON.stringify(onDisk) === JSON.stringify(listed),
+   `폴더 ${onDisk.length}장 / 목록 ${listed.length}장`);
+const naming = await page.evaluate(() => {
+  const want = new Set(CATEGORIES.filter((c) => c.photos).flatMap((c) => c.words.map((w) => imgFile(c, w))));
+  return [...PHOTOS].filter((f) => !want.has(f));
+});
+ok("사진 파일명이 카드와 짝이 맞음", naming.length === 0, naming.join(","));
+
 /* 3) 넘기기 */
 await page.locator(".tile").first().click();
 ok("표지 → 동물", (await page.locator("#wordKo").textContent()) === "강아지");

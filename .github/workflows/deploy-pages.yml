@@ -35,7 +35,7 @@ jobs:
         run: |
           mkdir -p _site/cards
           cp app/* _site/
-          cp cards/* _site/cards/
+          cp -r cards/. _site/cards/   # img/ 같은 하위 폴더까지
 
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
