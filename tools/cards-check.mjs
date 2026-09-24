@@ -101,6 +101,16 @@ ok("사진은 터치·끌기를 받지 않음 (스와이프 보호)", photoInert
 /* 3) 넘기기 */
 await page.locator(".tile").first().click();
 ok("표지 → 동물", (await page.locator("#wordKo").textContent()) === "강아지");
+// 사진은 배경이 투명하다. 밑의 그림(SVG)이 실제로 꺼지지 않으면 사진 뒤로 비친다
+if (listed.includes("animals-dog.webp")) {
+  await page.waitForSelector("#cardArt .photo", { timeout: 3000 }).catch(() => {});
+  const under = await page.evaluate(() => {
+    const s = document.querySelector("#cardArt svg");
+    return { photo: !!document.querySelector("#cardArt .photo"), svg: s ? getComputedStyle(s).display : "없음" };
+  });
+  ok("사진이 뜨면 밑의 그림은 감춤 (투명 배경 비침 방지)", under.photo && under.svg === "none",
+     `사진 ${under.photo ? "있음" : "없음"} · 그림 display=${under.svg}`);
+}
 await page.click("#btnNext");
 ok("다음 카드", (await page.locator("#wordKo").textContent()) === "고양이");
 await page.click("#btnPrev"); await page.click("#btnPrev");

@@ -1235,7 +1235,28 @@ const imgFile = (cat, w) => cat.id + "-" + w.en.toLowerCase().replace(/[^a-z0-9]
 /* img/ 에 실제로 들어 있는 파일 목록. 없는 파일을 불러 404 를 내지 않으려고 적어 둔다.
    고칠 때는 손으로 쓰지 말고 `node tools/cards-photos.mjs` — 폴더를 훑어 이 줄을 다시 쓴다.
    (어긋나면 tools/cards-check.mjs 가 잡는다) */
-const PHOTOS = new Set([]);
+const PHOTOS = new Set([
+  "animals-bear.webp",
+  "animals-cat.webp",
+  "animals-chick.webp",
+  "animals-dog.webp",
+  "animals-elephant.webp",
+  "animals-lion.webp",
+  "animals-pig.webp",
+  "animals-rabbit.webp",
+  "body-eyes.webp",
+  "body-teeth.webp",
+  "fruits-apple.webp",
+  "fruits-banana.webp",
+  "fruits-cherry.webp",
+  "fruits-grapes.webp",
+  "fruits-peach.webp",
+  "fruits-strawberry.webp",
+  "fruits-tangerine.webp",
+  "fruits-watermelon.webp",
+  "things-cup.webp",
+  "vehicles-car.webp"
+]);
 function paintArt(box, cat, w, art) {
   box.innerHTML = art || w.art;
   if (!cat.photos || !PHOTOS.has(imgFile(cat, w))) return;
@@ -1247,7 +1268,8 @@ function paintArt(box, cat, w, art) {
   img.addEventListener("load", () => {
     if (box.dataset.key !== cat.id + "/" + w.ko) return;   // 그 사이 카드가 넘어갔으면 버린다
     const s = box.querySelector("svg");
-    if (s) s.hidden = true;
+    // SVG 요소엔 .hidden 속성이 없다(HTMLElement 전용) — 대입해도 속성이 안 붙어 그림이 사진 뒤로 비친다
+    if (s) s.setAttribute("hidden", "");
     box.appendChild(img);
   });
   box.dataset.key = cat.id + "/" + w.ko;
