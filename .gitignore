@@ -14,3 +14,10 @@ android/*.idsig
 android/classes.jar
 android/base.zip
 android/res.flata
+
+# 점검 스크립트가 남기는 것 (tools/cards-check.mjs)
+.shots/
+.syntax-check.js
+
+# 이미지 생성 원본 (tools/cards-generate.mjs) — 장당 1~2MB라 저장소에 넣지 않는다
+.gen/
